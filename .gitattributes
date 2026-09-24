@@ -1,0 +1,10 @@
+* text=auto eol=lf
+
+* export-ignore
+
+composer.json     -export-ignore
+bin/              -export-ignore
+bin/composer-peel -export-ignore
+LICENSE.md        -export-ignore
+src/              -export-ignore
+src/**            -export-ignore

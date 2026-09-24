@@ -1,0 +1,11 @@
+php-version = "8.2"
+
+[source]
+paths = ["src", "tests"]
+
+[formatter]
+print-width = 120
+
+[linter]
+integrations = ["phpunit"]
+
