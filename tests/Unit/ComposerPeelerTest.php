@@ -7,6 +7,7 @@ namespace Stolt\ComposerPeel\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Stolt\ComposerPeel\Model\ComposerPeeler;
+use Stolt\ComposerPeel\Model\Configuration;
 
 class ComposerPeelerTest extends TestCase
 {
@@ -86,5 +87,27 @@ class ComposerPeelerTest extends TestCase
 
         static::assertArrayHasKey('require-dev', $manifest);
         static::assertFileDoesNotExist('.composer-unpeeled.json');
+    }
+
+    public function testPeelRespectsCustomConfiguredSections(): void
+    {
+        $config = new Configuration();
+        // Only peel require-dev, but leave scripts intact.
+        $config->setPeelSections(['require-dev']);
+        $this->peeler->setConfiguration($config);
+
+        $initialManifest = [
+            'name' => 'vendor/package',
+            'require-dev' => ['phpunit/phpunit' => '^10.0'],
+            'scripts' => ['test' => 'phpunit'],
+        ];
+        file_put_contents('composer.json', json_encode($initialManifest));
+
+        $this->peeler->peel();
+
+        $peeledManifest = json_decode((string) file_get_contents('composer.json'), associative: true);
+
+        static::assertArrayNotHasKey('require-dev', $peeledManifest);
+        static::assertArrayHasKey('scripts', $peeledManifest); // Should not be peeled
     }
 }

@@ -28,13 +28,15 @@ class ConfigurationLoaderTest extends TestCase
 
     public function testLoadConfig(): void
     {
-        $configContent = "<?php\n\nreturn [\n    \"release\" => [\n        \"backup\" => [\n            \"enabled\" => false,\n            \"path\" => \"my-backup.json\",\n        ],\n    ],\n    \"git\" => [\n        \"commit_messages\" => [\n            \"before_tag\" => \"My before message\",\n            \"after_tag\" => \"My after message\",\n        ],\n    ],\n];\n";
-
-        file_put_contents($this->testDir . '/.composer-peel.php', $configContent);
+        copy(
+            from: getcwd() . '/tests/fixtures/.composer-peel.php',
+            to: $this->testDir . '/.composer-peel.php'
+        );
 
         $loader = new ConfigurationLoader();
         $config = $loader->load($this->testDir . '/.composer-peel.php');
 
+        static::assertSame(['require-dev', 'scripts'], $config->getPeelSections());
         static::assertFalse($config->isBackupEnabled());
         static::assertSame('my-backup.json', $config->getBackupPath());
         static::assertSame('My before message', $config->getBeforeTagCommitMessage());

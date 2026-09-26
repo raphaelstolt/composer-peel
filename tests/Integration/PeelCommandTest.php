@@ -24,9 +24,9 @@ class PeelCommandTest extends TestCase
         $this->testDir = sys_get_temp_dir() . '/composer-peel-test-' . uniqid();
         mkdir($this->testDir);
         chdir($this->testDir);
-        
+
         copy(from: $this->originalDir . '/tests/fixtures/composer.json', to: 'composer.json');
-        
+
         exec('git init');
         exec('git config user.name "Test User"');
         exec('git config user.email "test@example.com"');
@@ -39,6 +39,7 @@ class PeelCommandTest extends TestCase
         chdir($this->originalDir);
         exec('rm -rf ' . escapeshellarg($this->testDir));
     }
+
     public function testExecuteDryRun(): void
     {
         TestCommand::for(new PeelCommand())
@@ -75,10 +76,10 @@ class PeelCommandTest extends TestCase
         static::assertArrayNotHasKey('autoload-dev', $manifest);
         static::assertArrayNotHasKey('scripts', $manifest);
         static::assertArrayNotHasKey('scripts-descriptions', $manifest);
-        
+
         static::assertArrayHasKey('require', $manifest);
         static::assertArrayHasKey('autoload', $manifest);
-        
+
         static::assertFileExists('.composer-unpeeled.json');
     }
 
@@ -99,10 +100,13 @@ class PeelCommandTest extends TestCase
 
         // Assert git tags and commits
         exec('git log --oneline', $logOutput);
-        static::assertStringContainsString('chore: restore development Composer manifest', implode("
-", $logOutput));
-        static::assertStringContainsString('chore(dist): prepare Composer manifest for release', implode("
-", $logOutput));
+        static::assertStringContainsString('chore: restore development Composer manifest', implode('
+', $logOutput));
+        static::assertStringContainsString('chore(dist): prepare Composer manifest for release', implode(
+            '
+',
+            $logOutput,
+        ));
 
         exec('git tag', $tagOutput);
         static::assertContains('v1.0.0', $tagOutput);

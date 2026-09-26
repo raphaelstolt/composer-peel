@@ -23,51 +23,18 @@ class ConfigurationLoader
 
         $config = new Configuration();
 
-        $this->applyReleaseConfig($config, $configArray);
-        $this->applyGitConfig($config, $configArray);
+        $config->setPeelSections($configArray['peel']['sections'] ?? $config->getPeelSections());
+
+        $config->setBackupEnabled($configArray['release']['backup']['enabled'] ?? $config->isBackupEnabled());
+        $config->setBackupPath($configArray['release']['backup']['path'] ?? $config->getBackupPath());
+
+        $config->setBeforeTagCommitMessage(
+            $configArray['git']['commit_messages']['before_tag'] ?? $config->getBeforeTagCommitMessage(),
+        );
+        $config->setAfterTagCommitMessage(
+            $configArray['git']['commit_messages']['after_tag'] ?? $config->getAfterTagCommitMessage(),
+        );
 
         return $config;
-    }
-
-    /**
-     * @param array<string, mixed> $configArray
-     */
-    private function applyReleaseConfig(Configuration $config, array $configArray): void
-    {
-        if (
-            array_key_exists('release', $configArray)
-            && is_array($configArray['release'])
-            && array_key_exists('backup', $configArray['release'])
-            && is_array($configArray['release']['backup'])
-        ) {
-            $backupConfig = $configArray['release']['backup'];
-            if (array_key_exists('enabled', $backupConfig)) {
-                $config->setBackupEnabled((bool) $backupConfig['enabled']);
-            }
-            if (array_key_exists('path', $backupConfig)) {
-                $config->setBackupPath((string) $backupConfig['path']);
-            }
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $configArray
-     */
-    private function applyGitConfig(Configuration $config, array $configArray): void
-    {
-        if (
-            array_key_exists('git', $configArray)
-            && is_array($configArray['git'])
-            && array_key_exists('commit_messages', $configArray['git'])
-            && is_array($configArray['git']['commit_messages'])
-        ) {
-            $messagesConfig = $configArray['git']['commit_messages'];
-            if (array_key_exists('before_tag', $messagesConfig)) {
-                $config->setBeforeTagCommitMessage((string) $messagesConfig['before_tag']);
-            }
-            if (array_key_exists('after_tag', $messagesConfig)) {
-                $config->setAfterTagCommitMessage((string) $messagesConfig['after_tag']);
-            }
-        }
     }
 }

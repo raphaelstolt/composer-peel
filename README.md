@@ -43,7 +43,6 @@ Depending on your package and configuration, metadata considered for removal may
 | -------------- | ---------------------------------------- |
 | `require-dev`  | Development-only dependencies            |
 | `autoload-dev` | Development-only autoloading rules       |
-| `repositories` | Custom dependency repository definitions |
 | `scripts`      | Development-only Composer scripts        |
 | `scripts-descriptions` | Composer scripts descriptions       |
 | `scripts-aliases` | Composer scripts aliases         |
@@ -122,6 +121,14 @@ Create a `.composer-peel.php` configuration file in your project root:
 declare(strict_types=1);
 
 return [
+    'peel' => [
+        'sections' => [
+            'require-dev',
+            'autoload-dev',
+            'scripts',
+        ],
+    ],
+
     'release' => [
         'backup' => [
             'enabled' => true,
@@ -138,7 +145,34 @@ return [
 ];
 ```
 
-If no configuration is provided the internal `peel` configuration defaults are used.
+### Peel configuration
+
+The `peel.sections` configuration defines which top-level `composer.json` sections should be removed from the peeled
+manifest.
+
+```php
+'peel' => [
+    'sections' => [
+        'require-dev',
+        'autoload-dev',
+        'scripts',
+    ],
+],
+```
+
+Supported sections include:
+
+| Section        | Description                                     |
+| -------------- | ----------------------------------------------- |
+| `require-dev`  | Development-only Composer dependencies          |
+| `autoload-dev` | Development-only autoloading configuration      |
+| `scripts`      | Composer scripts used during development and CI |
+| `scripts-descriptions` | Composer scripts descriptions           |
+| `scripts-aliases` | Composer scripts aliases                     |
+
+Only sections explicitly listed in the configuration are peeled.
+
+If no custom configuration is provided, `composer-peel` uses its default set of sections.
 
 ### Release backup
 

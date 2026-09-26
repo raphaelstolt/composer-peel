@@ -12,9 +12,8 @@ final class DryRunResult
     public function __construct(
         private array $removedSections,
         private int $originalSize,
-        private int $projectedSize
-    ) {
-    }
+        private int $projectedSize,
+    ) {}
 
     /**
      * @return array<int, string>

@@ -47,20 +47,15 @@ class ComposerPeeler
 
         $manifest = $this->decodeManifest($manifestContent);
 
-        $sectionsToRemove = [
-            'require-dev',
-            'autoload-dev',
-            'repositories',
-            'scripts',
-            'scripts-descriptions',
-            'scripts-aliases',
-        ];
+        $sectionsToRemove = $this->configuration->getPeelSections();
 
         $removedSections = [];
         foreach ($sectionsToRemove as $section) {
-            if (!(array_key_exists($section, $manifest))) { continue; }
+            if (!array_key_exists($section, $manifest)) {
+                continue;
+            }
 
-$removedSections[] = $section;
+            $removedSections[] = $section;
         }
 
         $manifest = $this->removeDevelopmentSections($manifest);
@@ -106,14 +101,7 @@ $removedSections[] = $section;
      */
     private function removeDevelopmentSections(array $manifest): array
     {
-        $sectionsToRemove = [
-            'require-dev',
-            'autoload-dev',
-            'repositories',
-            'scripts',
-            'scripts-descriptions',
-            'scripts-aliases',
-        ];
+        $sectionsToRemove = $this->configuration->getPeelSections();
 
         foreach ($sectionsToRemove as $section) {
             if (!array_key_exists($section, $manifest)) {
