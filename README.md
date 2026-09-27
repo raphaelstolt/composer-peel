@@ -75,6 +75,20 @@ Use a custom configuration:
 composer-peel peel --config=.composer-peel.php
 ```
 
+To create an initial configuration file `.composer-peel.php` in your project root with the internal default values, use
+the `init` command:
+
+```bash
+composer-peel init
+```
+
+By default, the `init` command will not overwrite an existing configuration file. If you want to overwrite it, use the
+`--overwrite` option:
+
+```bash
+composer-peel init --overwrite
+```
+
 A backup can also be created before the manifest is modified:
 
 ```bash

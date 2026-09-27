@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+### Added
+- New configuration `init` command.
+
 ## [v1.1.0] - 2026-09-27
 
 ### Added
