@@ -14,43 +14,42 @@
          alt="Composer metadata peeler logo">
 </p>
 
-A small development tool to strip or peel development-only metadata from Composer manifests when releasing PHP packages.
+A small PHP development tool for removing configurable development-only metadata from `composer.json` files when releasing
+packages for distribution.
 
-### Why?
+## Why?
 
-A PHP package's `composer.json` often contains metadata required during development but irrelevant to its consumers.
+A package's `composer.json` often contains metadata that is useful while developing and maintaining the package, but is
+not needed by downstream consumers.
 
-Development dependencies, local repository definitions, scripts, and other root-only configurations can be useful while
-building a package, yet unnecessary in a release-oriented Composer manifest.
+For example, development dependencies, development autoloading, and Composer scripts can make up a significant part of a
+project's development manifest.
 
-While Composer handles the separation of development and runtime dependencies, preparing a clean, minimal manifest for
-distribution can still require manual adjustments or custom scripting.
+`composer-peel` lets you explicitly define which Composer sections should be removed from a release manifest.
 
-`composer-peel` aims to simplify this process by removing configurable, non-runtime-required Composer metadata while
-preserving the information needed to consume the package.
+The goal is simple:
 
-The goal is straightforward: less development-related metadata and smaller package distributions.
+> Keep the package manifest focused on what consumers need and leave development metadata behind.
 
-### What gets peeled?
+## What gets peeled?
 
-`composer-peel` removes configurable Composer metadata that is not required when consuming a released package.
+The sections removed by `composer-peel` are configurable.
 
-The goal is to retain the metadata needed by downstream consumers while excluding development-specific configuration.
+The default configuration includes the following sections:
 
-Depending on your package and configuration, metadata considered for removal may include:
+| Section        | Purpose                                         |
+| -------------- | ----------------------------------------------- |
+| `require-dev`  | Development-only dependencies                   |
+| `autoload-dev` | Development-only autoloading                    |
+| `scripts`      | Composer scripts used during development and CI |
+| `scripts-descriptions` | Composer scripts descriptions           |
+| `scripts-aliases` | Composer scripts aliases                     |
 
-| Composer field | Purpose                                  |
-| -------------- | ---------------------------------------- |
-| `require-dev`  | Development-only dependencies            |
-| `autoload-dev` | Development-only autoloading rules       |
-| `scripts`      | Development-only Composer scripts        |
-| `scripts-descriptions` | Composer scripts descriptions       |
-| `scripts-aliases` | Composer scripts aliases         |
-
-The exact fields removed depend on the peeling rules applied by `composer-peel`. Runtime dependencies and package
-autoloading metadata should be preserved.
+Runtime dependencies and package autoloading remain untouched.
 
 ## Installation
+
+Install `composer-peel` as a development dependency:
 
 ```bash
 composer require --dev stolt/composer-peel
@@ -58,37 +57,54 @@ composer require --dev stolt/composer-peel
 
 ## Usage
 
-```bash
-composer-peel peel [--dry-run]
-composer-peel peel [--backup-file=.composer-unpeeled.json]
-composer-peel peel [--config=.composer-peel.php]
+Peel the current `composer.json`:
 
-# Automatically run the peel and release workflow
-composer-peel peel <version-tag> [--config=.composer-peel.php]
+```bash
+composer-peel peel
 ```
 
-### Previewing changes with `--dry-run`
-
-Use the `--dry-run` option to preview the changes `composer-peel` would apply to your `composer.json` without modifying
-the original file.
+Preview the changes without modifying the manifest:
 
 ```bash
 composer-peel peel --dry-run
 ```
 
-The dry run reports:
+Use a custom configuration:
 
-* The configuration file used, or the default configuration.
-* Composer sections that would be removed, such as `require-dev`, `autoload-dev`, and `scripts`.
-* The original `composer.json` file size.
-* The projected file size after peeling.
-* The estimated size reduction in bytes and percentage.
+```bash
+composer-peel peel --config=.composer-peel.php
+```
 
-Example output:
+A backup can also be created before the manifest is modified:
+
+```bash
+composer-peel peel --backup-file=.composer-unpeeled.json
+```
+
+## Previewing changes with `--dry-run`
+
+Use `--dry-run` to inspect what `composer-peel` would remove without modifying `composer.json`.
+
+```bash
+composer-peel peel --dry-run
+```
+
+The dry run shows:
+
+* the manifest being processed,
+* the configuration being used,
+* the sections that would be removed,
+* the original manifest size,
+* the projected manifest size,
+* the estimated size reduction.
+
+With the default configuration:
 
 ```text
+composer-peel --dry-run
+
 Manifest:      composer.json
-Configuration: .composer-peel.php | internal defaults
+Configuration: internal defaults
 
 Sections to be removed:
   - require-dev
@@ -102,18 +118,14 @@ Estimated reduction: 1,360 bytes (54.8%)
 Dry run completed. No files were modified.
 ```
 
-If no custom configuration file is provided, the command uses its default configuration.
-
-The dry run is useful for assessing the impact of metadata minimisation and reviewing the applied configuration before
-modifying your Composer manifest.
+The values above are illustrative. The actual result depends on the contents of your `composer.json` and the configured
+peeling rules.
 
 ## Configuration
 
-`composer-peel` supports a PHP-based configuration file named `.composer-peel.php` in your project root.
+`composer-peel` supports an optional PHP configuration file named `.composer-peel.php` in the project root.
 
-Use it to customise release backup behaviour and Git commit messages.
-
-Create a `.composer-peel.php` configuration file in your project root:
+A configuration can define which Composer sections are peeled, as well as release backup and Git commit behaviour:
 
 ```php
 <?php
@@ -145,10 +157,9 @@ return [
 ];
 ```
 
-### Peel configuration
+### Peel sections
 
-The `peel.sections` configuration defines which top-level `composer.json` sections should be removed from the peeled
-manifest.
+The `peel.sections` option defines the top-level Composer sections that should be removed:
 
 ```php
 'peel' => [
@@ -160,67 +171,66 @@ manifest.
 ],
 ```
 
-Supported sections include:
+Only explicitly configured sections are peeled.
 
-| Section        | Description                                     |
-| -------------- | ----------------------------------------------- |
-| `require-dev`  | Development-only Composer dependencies          |
-| `autoload-dev` | Development-only autoloading configuration      |
-| `scripts`      | Composer scripts used during development and CI |
-| `scripts-descriptions` | Composer scripts descriptions           |
-| `scripts-aliases` | Composer scripts aliases                     |
-
-Only sections explicitly listed in the configuration are peeled.
-
-If no custom configuration is provided, `composer-peel` uses its default set of sections.
+This makes the behaviour predictable and allows each package to decide which metadata belongs exclusively to its
+development workflow.
 
 ### Release backup
 
-The release backup stores the original `composer.json` before it is peeled. When enabled, the backup provides a recovery
-point if the release process fails before the original manifest is restored. Ensure that the backup file is not
-unintentionally included in the tagged release.
+The release backup stores the original `composer.json` before it is peeled:
 
-| Option                   | Description                                                  |
-| ------------------------ | ------------------------------------------------------------ |
-| `release.backup.enabled` | Enables or disables backing up the original `composer.json`. |
-| `release.backup.path`    | Path to the backup file, relative to the project root.       |
+```php
+'release' => [
+    'backup' => [
+        'enabled' => true,
+        'path' => '.composer-unpeeled.json',
+    ],
+],
+```
 
-> [!TIP]
-> Keep backups enabled to provide a recovery point if the release process fails before the original manifest is
-restored.
+The backup provides a recovery point if the release process fails before the original manifest is restored.
+
+Make sure the backup file is not unintentionally included in the release.
 
 ### Git commit messages
 
-The Git commit messages used during the release workflow can be customised to match your project's conventions.
+The automated release workflow uses configurable commit messages:
 
-| Configuration                    | Description                                                                                                                |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `git.commit_messages.before_tag` | Commit message for the peeled `composer.json`. This commit is the target of the release tag.                               |
-| `git.commit_messages.after_tag`  | Commit message for the commit that restores the original, unpeeled `composer.json` after the release tag has been created. |
+```php
+'git' => [
+    'commit_messages' => [
+        'before_tag' => 'chore(dist): prepare Composer manifest for release',
+        'after_tag' => 'chore: restore development Composer manifest',
+    ],
+],
+```
 
-Both messages can be customised to match your project's Git conventions. The defaults assume [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+`before_tag` is used for the commit containing the peeled manifest.
+
+`after_tag` is used for the commit restoring the original development manifest.
 
 ## Release workflow
 
-`composer-peel` supports preparing a peeled Composer manifest for a tagged release while retaining the original
-development manifest on the working branch.
+`composer-peel` can automate the process of preparing a peeled manifest for a Git-tagged release while restoring the
+original development manifest afterwards.
 
-You can automate this entire lifecycle by passing a Git tag to the `peel` command:
+Run:
 
 ```bash
 composer-peel peel v1.0.0
 ```
 
-The command orchestrates the following workflow sequence:
+The workflow is:
 
-1. Back up the original `composer.json` (requires backup to be enabled).
-2. Generate the peeled Composer manifest.
-3. Commit the peeled manifest using the configured `before_tag` commit message.
-4. Create the release Git tag pointing to the peeled-manifest commit.
-5. Restore the original, unpeeled `composer.json`.
-6. Commit the restored manifest using the configured `after_tag` commit message.
+1. Back up the original `composer.json`, if enabled.
+2. Generate the peeled manifest.
+3. Commit the peeled manifest.
+4. Create the release tag.
+5. Restore the original manifest.
+6. Commit the restored manifest.
 
-The resulting Git history follows this sequence:
+The resulting history looks like this:
 
 ```text
 Development commit
@@ -234,12 +244,19 @@ Peeled manifest commit
 Restored development manifest commit
 ```
 
-The release Git tag references the peeled manifest, while the development branch continues with the original manifest.
+The release tag therefore points to the peeled manifest, while the development branch continues with the original
+manifest.
 
 > [!IMPORTANT]
-> __CI compatibility__: This release workflow only works when the release step is not validated by CI against the
-> peeled-manifest commit. Since development dependencies and scripts are no longer be available after peeling, CI jobs
-> that rely on them will fail. Ensure your release process accounts for this limitation before enabling the workflow.
+>
+> The automated release workflow only works when the peeled-manifest commit does not need to pass the project's normal
+> development CI checks.
+>
+> After peeling, development dependencies, development autoloading, and Composer scripts may no longer be available. CI
+> jobs that depend on them can therefore fail.
+>
+> If your release process requires CI validation of the tagged commit, consider using `composer-peel` as a separate
+> distribution/build step instead of tagging the peeled manifest directly.
 
 ## License
 
