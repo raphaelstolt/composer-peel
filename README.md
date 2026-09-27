@@ -258,6 +258,31 @@ manifest.
 > If your release process requires CI validation of the tagged commit, consider using `composer-peel` as a separate
 > distribution/build step instead of tagging the peeled manifest directly.
 
+## AI skill
+
+`composer-peel` includes an AI skill for AI coding agents that need to prepare a Composer package for distribution.
+
+The skill is located at:
+
+```text
+.agents/skills/composer-peel/SKILL.md
+```
+
+It provides agents with guidance for:
+
+* previewing Composer manifest changes
+* peeling configured Composer sections
+* inspecting `.composer-peel.php` configuration
+* safely preparing a package for release
+* executing the tagged release workflow
+* validating the resulting Composer manifest
+
+The skill is intentionally kept alongside the `composer-peel` source so that its instructions can evolve together with
+the CLI and its configuration.
+
+Agents that support repository-local skills can use the skill to understand when and how to use `composer-peel` instead
+of manually modifying `composer.json`.
+
 ## License
 
 This CLI and its library are licensed under the MIT license. Please see [LICENSE.md](LICENSE.md) for more details.
