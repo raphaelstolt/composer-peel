@@ -16,6 +16,7 @@ Use this skill when the task involves:
 * previewing which Composer sections will be peeled
 * creating a release tag with a peeled Composer manifest
 * restoring the development Composer manifest after a release
+* restoring the development Composer manifest from a backup file
 
 Do not manually remove Composer sections when `composer-peel` is available and the requested operation matches its purpose.
 
@@ -86,6 +87,22 @@ The tag must be a valid semantic version such as:
 
 ```text
 v1.0.0
+```
+
+### Rollback Changes
+
+To restore the development `composer.json` from a backup file (e.g., after a failed release or to revert a manual peel operation):
+
+```bash
+vendor/bin/composer-peel rollback
+```
+
+This restores `composer.json` from the backup file configured in `.composer-peel.php` (defaulting to `.composer-unpeeled.json`) and removes the backup file.
+
+To preserve the backup file after restoration:
+
+```bash
+vendor/bin/composer-peel rollback --keep-backup
 ```
 
 ## Configuration
@@ -176,6 +193,16 @@ For a tagged release:
 5. Verify the resulting Git state and tag.
 
 6. Confirm that the development Composer manifest has been restored.
+
+For a rollback request:
+
+1. Ensure the backup file (e.g., `.composer-unpeeled.json`) exists.
+2. Run:
+
+   ```bash
+   vendor/bin/composer-peel rollback
+   ```
+3. Inspect `composer.json` to confirm it has been fully restored.
 
 ## Important Distinction
 
