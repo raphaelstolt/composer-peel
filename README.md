@@ -29,11 +29,13 @@ project's development manifest.
 
 The goal is simple:
 
-> Keep the package manifest focused on what consumers need and leave development metadata behind.
+> Keep the release package manifest i.e. `composer.json` focused on what consumers need and leave development metadata behind.
 
 ## What gets peeled?
 
-The sections removed by `composer-peel` are configurable.
+The sections removed by `composer-peel` are configurable. These are removed from the package's published composer.json;
+they are not removed from the source repository's development configuration permanently. Runtime dependencies and package
+autoloading remain untouched.
 
 The default configuration includes the following sections:
 
@@ -44,8 +46,6 @@ The default configuration includes the following sections:
 | `scripts`      | Composer scripts used during development and CI |
 | `scripts-descriptions` | Composer scripts descriptions           |
 | `scripts-aliases` | Composer scripts aliases                     |
-
-Runtime dependencies and package autoloading remain untouched.
 
 ## Installation
 
@@ -75,8 +75,8 @@ Use a custom configuration:
 composer-peel peel --config=.composer-peel.php
 ```
 
-To create an initial configuration file `.composer-peel.php` in your project root with the internal default values, use
-the `init` command:
+The `init` command is useful when you want to make the peeling policy explicit and version-controlled
+in your repository. It generates a configuration file from the current internal defaults, which you can then customise.
 
 ```bash
 composer-peel init
@@ -115,7 +115,7 @@ The dry run shows:
 With the default configuration:
 
 ```text
-composer-peel --dry-run
+$ composer-peel --dry-run
 
 Manifest:      composer.json
 Configuration: internal defaults
@@ -124,6 +124,8 @@ Sections to be removed:
   - require-dev
   - autoload-dev
   - scripts
+  - scripts-descriptions
+  - scripts-aliases
 
 Original size:       2,480 bytes
 Projected size:      1,120 bytes
@@ -174,6 +176,8 @@ return [
             'require-dev',
             'autoload-dev',
             'scripts',
+            'scripts-descriptions',
+            'scripts-aliases',
         ],
     ],
 
@@ -203,6 +207,8 @@ The `peel.sections` option defines the top-level Composer sections that should b
         'require-dev',
         'autoload-dev',
         'scripts',
+        'scripts-descriptions',
+        'scripts-aliases',
     ],
 ],
 ```
@@ -285,6 +291,8 @@ manifest.
 
 > [!IMPORTANT]
 >
+> The release tag points to a commit containing a different `composer.json` than the development branch.
+>
 > The automated release workflow only works when the peeled-manifest commit does not need to pass the project's normal
 > development CI checks.
 >
@@ -294,30 +302,16 @@ manifest.
 > If your release process requires CI validation of the tagged commit, consider using `composer-peel` as a separate
 > distribution/build step instead of tagging the peeled manifest directly.
 
+## Composer lock file
+
+`composer-peel` modifies only `composer.json`. It does not modify `composer.lock`.
+
 ## AI skill
 
-`composer-peel` includes an AI skill for AI coding agents that need to prepare a Composer package for distribution.
+`composer-peel` includes a repository-local AI skill at `.agents/skills/composer-peel/SKILL.md`.
 
-The skill is located at:
-
-```text
-.agents/skills/composer-peel/SKILL.md
-```
-
-It provides agents with guidance for:
-
-* previewing Composer manifest changes
-* peeling configured Composer sections
-* inspecting `.composer-peel.php` configuration
-* safely preparing a package for release
-* executing the tagged release workflow
-* validating the resulting Composer manifest
-
-The skill is intentionally kept alongside the `composer-peel` source so that its instructions can evolve together with
-the CLI and its configuration.
-
-Agents that support repository-local skills can use the skill to understand when and how to use `composer-peel` instead
-of manually modifying `composer.json`.
+The skill teaches compatible coding agents how to inspect the configuration, preview changes, peel
+the configured sections, and safely perform the release workflow.
 
 ## License
 
