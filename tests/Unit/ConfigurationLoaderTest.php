@@ -28,10 +28,7 @@ class ConfigurationLoaderTest extends TestCase
 
     public function testLoadConfig(): void
     {
-        copy(
-            from: getcwd() . '/tests/fixtures/.composer-peel.php',
-            to: $this->testDir . '/.composer-peel.php'
-        );
+        copy(from: getcwd() . '/tests/fixtures/.composer-peel.php', to: $this->testDir . '/.composer-peel.php');
 
         $loader = new ConfigurationLoader();
         $config = $loader->load($this->testDir . '/.composer-peel.php');

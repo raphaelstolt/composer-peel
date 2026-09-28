@@ -3,6 +3,7 @@
 
 use Stolt\ComposerPeel\Command\InitCommand;
 use Stolt\ComposerPeel\Command\PeelCommand;
+use Stolt\ComposerPeel\Command\RollbackCommand;
 use Symfony\Component\Console\Application;
 
 $autoloadFiles = [
@@ -27,11 +28,12 @@ if (!$autoloaderFound) {
     die(1);
 }
 
-const APPLICATION_VERSION = '1.2.0';
+const APPLICATION_VERSION = '1.1.0';
 
 $application = new Application('composer-peel', APPLICATION_VERSION);
 
 $application->addCommand(new InitCommand());
 $application->addCommand(new PeelCommand());
+$application->addCommand(new RollbackCommand());
 
 $application->run();

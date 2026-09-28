@@ -135,6 +135,28 @@ Dry run completed. No files were modified.
 The values above are illustrative. The actual result depends on the contents of your `composer.json` and the configured
 peeling rules.
 
+## Rolling back changes
+
+If a backup file was created during the `peel` process, you can restore `composer.json` to its original state using
+the `rollback` command.
+
+```bash
+composer-peel rollback
+```
+
+By default, the `rollback` command will delete the backup file after successfully restoring the manifest. If you want
+to keep the backup file, use the `--keep-backup` option:
+
+```bash
+composer-peel rollback --keep-backup
+```
+
+You can also specify a custom backup file or configuration file during rollback:
+
+```bash
+composer-peel rollback --backup-file=my-backup.json --config=.composer-peel.php
+```
+
 ## Configuration
 
 `composer-peel` supports an optional PHP configuration file named `.composer-peel.php` in the project root.

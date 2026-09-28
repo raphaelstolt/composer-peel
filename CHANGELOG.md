@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+### Added
+- New `rollback` command.
+
 ## [v1.2.0] - 2026-09-27
 
 ### Added
