@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+### Fixed
+- Widen `sebastian/diff` support.
+
 ## [v1.3.1] - 2026-09-29
 
 ### Fixed
