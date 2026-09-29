@@ -9,12 +9,10 @@ use RuntimeException;
 class ReleaseManager
 {
     private Configuration $configuration;
-    private ManifestValidator $manifestValidator;
 
-    public function __construct(Configuration $configuration, ?ManifestValidator $manifestValidator = null)
+    public function __construct(Configuration $configuration)
     {
         $this->configuration = $configuration;
-        $this->manifestValidator = $manifestValidator ?? new ManifestValidator($configuration);
     }
 
     public function release(string $tag): void
@@ -29,8 +27,6 @@ class ReleaseManager
 
         $this->verifyGitIsAvailable();
         $this->verifyOnlyManifestChanged();
-
-        $this->manifestValidator->validate(getcwd() . '/composer.json', $this->configuration->getBackupPath());
 
         $this->executeGitCommand(['git', 'add', 'composer.json']);
         $this->executeGitCommand(['git', 'commit', '-m', $this->configuration->getBeforeTagCommitMessage()]);

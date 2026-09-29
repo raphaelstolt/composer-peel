@@ -6,8 +6,10 @@ namespace Stolt\ComposerPeel\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Stolt\ComposerPeel\Command\PeelCommand;
 use Stolt\ComposerPeel\Command\ReleaseCommand;
-use Stolt\ComposerPeel\Model\ComposerPeeler;
+use Stolt\ComposerPeel\Command\RollbackCommand;
+use Stolt\ComposerPeel\Model\Configuration;
 use Zenstruck\Console\Test\TestCommand;
 
 class ReleaseCommandTest extends TestCase
@@ -59,33 +61,12 @@ class ReleaseCommandTest extends TestCase
             ->assertOutputContains('The composer-peel release workflow requires a clean working tree.');
     }
 
-    public function testExecuteReleaseFailsIfManifestHasNotBeenPeeled(): void
+    public function testExecuteReleaseFailsIfThereIsNothingToCommit(): void
     {
         TestCommand::for(new ReleaseCommand())
             ->execute('v1.0.0')
             ->assertStatusCode(1)
-            ->assertOutputContains(
-                'Backup file .composer-unpeeled.json does not exist. Run the peel command before releasing.',
-            );
-
-        exec('git tag', $tagOutput);
-        static::assertSame([], $tagOutput);
-    }
-
-    public function testExecuteReleaseFailsIfPeeledManifestIsInvalid(): void
-    {
-        (new ComposerPeeler())->peel();
-
-        $manifest = json_decode((string) file_get_contents('composer.json'), associative: true);
-        static::assertIsArray($manifest);
-        $manifest['require-dev'] = ['phpunit/phpunit' => '^10.0'];
-        file_put_contents('composer.json', (string) json_encode($manifest));
-
-        TestCommand::for(new ReleaseCommand())
-            ->execute('v1.0.0')
-            ->assertStatusCode(1)
-            ->assertOutputContains('The peeled composer.json is invalid:')
-            ->assertOutputContains("Section 'require-dev' has not been peeled.");
+            ->assertOutputContains("Git command failed: 'git' 'commit'");
 
         exec('git log --oneline', $logOutput);
         static::assertCount(1, $logOutput);
@@ -94,27 +75,108 @@ class ReleaseCommandTest extends TestCase
         static::assertSame([], $tagOutput);
     }
 
+    public function testExecuteReleaseFailsIfPeelBackupIsNotTheConfiguredBackup(): void
+    {
+        TestCommand::for(new PeelCommand())
+            ->execute('--backup-file=custom-backup.json')
+            ->assertSuccessful();
+
+        TestCommand::for(new ReleaseCommand())
+            ->execute('v1.0.0')
+            ->assertStatusCode(1)
+            ->assertOutputContains('The composer-peel release workflow requires a clean working tree.');
+
+        exec('git tag', $tagOutput);
+        static::assertSame([], $tagOutput);
+    }
+
     public function testExecuteRelease(): void
     {
-        (new ComposerPeeler())->peel();
+        TestCommand::for(new PeelCommand())
+            ->execute()
+            ->assertSuccessful()
+            ->assertOutputContains('Metadata peeled successfully.');
 
         TestCommand::for(new ReleaseCommand())
             ->execute('v1.0.0')
             ->assertSuccessful()
             ->assertOutputContains('Release workflow completed successfully for tag: v1.0.0.');
 
-        exec('git log --oneline', $logOutput);
-        static::assertStringContainsString('chore(dist): prepare Composer manifest for release', implode("\n", $logOutput));
-        static::assertStringNotContainsString('chore: restore development Composer manifest', implode("\n", $logOutput));
+        exec('git log --pretty=%s', $logOutput);
+        static::assertSame(
+            ['chore(dist): prepare Composer manifest for release', 'Initial commit'],
+            $logOutput,
+        );
 
-        exec('git tag', $tagOutput);
-        static::assertContains('v1.0.0', $tagOutput);
+        exec('git tag --points-at HEAD', $tagOutput);
+        static::assertSame(['v1.0.0'], $tagOutput);
 
-        exec('git show v1.0.0:composer.json', $taggedManifestOutput);
-        $taggedManifest = json_decode(implode("\n", $taggedManifestOutput), associative: true);
-        static::assertIsArray($taggedManifest);
-        static::assertArrayNotHasKey('require-dev', $taggedManifest);
+        $taggedManifest = $this->readManifestAt('v1.0.0');
+        foreach ((new Configuration())->getPeelSections() as $section) {
+            static::assertArrayNotHasKey($section, $taggedManifest);
+        }
+        static::assertArrayHasKey('require', $taggedManifest);
+        static::assertArrayHasKey('autoload', $taggedManifest);
 
-        static::assertFileExists('.composer-unpeeled.json');
+        exec('git status --porcelain --untracked-files=all', $statusOutput);
+        static::assertSame(['?? .composer-unpeeled.json'], $statusOutput);
+    }
+
+    public function testExecuteReleaseWithCustomBackupFile(): void
+    {
+        TestCommand::for(new PeelCommand())
+            ->execute('--backup-file=custom-backup.json')
+            ->assertSuccessful();
+
+        TestCommand::for(new ReleaseCommand())
+            ->execute('v1.0.0 --backup-file=custom-backup.json')
+            ->assertSuccessful();
+
+        exec('git tag --points-at HEAD', $tagOutput);
+        static::assertSame(['v1.0.0'], $tagOutput);
+
+        static::assertFileExists('custom-backup.json');
+    }
+
+    public function testExecuteCompleteReleaseWorkflow(): void
+    {
+        $developmentManifest = (string) file_get_contents('composer.json');
+
+        TestCommand::for(new PeelCommand())->execute()->assertSuccessful();
+        TestCommand::for(new ReleaseCommand())->execute('v1.0.0')->assertSuccessful();
+        TestCommand::for(new RollbackCommand())->execute('--commit')->assertSuccessful();
+
+        exec('git log --pretty=%s', $logOutput);
+        static::assertSame(
+            [
+                'chore: restore development Composer manifest',
+                'chore(dist): prepare Composer manifest for release',
+                'Initial commit',
+            ],
+            $logOutput,
+        );
+
+        exec('git tag --points-at HEAD~1', $tagOutput);
+        static::assertSame(['v1.0.0'], $tagOutput);
+
+        static::assertArrayNotHasKey('require-dev', $this->readManifestAt('v1.0.0'));
+        static::assertArrayHasKey('require-dev', $this->readManifestAt('HEAD'));
+        static::assertSame($developmentManifest, file_get_contents('composer.json'));
+
+        exec('git status --porcelain --untracked-files=all', $statusOutput);
+        static::assertSame([], $statusOutput);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function readManifestAt(string $revision): array
+    {
+        exec('git show ' . escapeshellarg($revision . ':composer.json'), $manifestOutput);
+        $manifest = json_decode(implode("\n", $manifestOutput), associative: true);
+        static::assertIsArray($manifest);
+
+        /** @var array<string, mixed> $manifest */
+        return $manifest;
     }
 }
