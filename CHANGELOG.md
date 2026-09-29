@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+### Fixed
+- The status of Git working tree is checked.
+
 ### Added
 - New `--format` option for the `peel` command.
 

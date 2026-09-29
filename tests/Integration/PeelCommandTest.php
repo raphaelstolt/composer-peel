@@ -112,6 +112,17 @@ class PeelCommandTest extends TestCase
             ->assertOutputContains("The provided Git tag 'invalid-tag' is not a valid semantic version.");
     }
 
+    public function testExecuteReleaseThrowsErrorForDirtyWorkingTree(): void
+    {
+        file_put_contents('composer.json', "\n", FILE_APPEND);
+
+        TestCommand::for(new PeelCommand())
+            ->execute('v1.0.0')
+            ->assertStatusCode(1)
+            ->assertOutputContains('ERROR: Working tree contains uncommitted changes.')
+            ->assertOutputContains('composer-peel release must start from a clean working tree.');
+    }
+
     public function testExecuteRelease(): void
     {
         TestCommand::for(new PeelCommand())

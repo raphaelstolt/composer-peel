@@ -24,11 +24,12 @@ class ReleaseManager
             throw new RuntimeException("The provided Git tag '{$tag}' is not a valid semantic version.");
         }
 
-        $this->verifyGitIsAvailable();
-
         if (!$this->configuration->isBackupEnabled()) {
             throw new RuntimeException('Release workflow requires backup to be enabled.');
         }
+
+        $this->verifyGitIsAvailable();
+        $this->verifyCleanWorkingTree();
 
         $this->peeler->peel();
 
@@ -54,6 +55,14 @@ class ReleaseManager
         exec('git --version', $output, $resultCode);
         if ($resultCode !== 0) {
             throw new RuntimeException('Git is not available or not installed.');
+        }
+    }
+
+    private function verifyCleanWorkingTree(): void
+    {
+        exec('git status --porcelain', $output, $resultCode);
+        if ($resultCode !== 0 || count($output) > 0) {
+            throw new RuntimeException("ERROR: Working tree contains uncommitted changes.\n\ncomposer-peel release must start from a clean working tree.");
         }
     }
 
