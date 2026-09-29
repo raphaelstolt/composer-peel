@@ -14,6 +14,36 @@ final class Configuration
         'scripts-descriptions',
         'scripts-aliases',
     ];
+
+    private const PROTECTED_SECTIONS = [
+        'name',
+        'description',
+        'version',
+        'type',
+        'keywords',
+        'homepage',
+        'readme',
+        'time',
+        'license',
+        'authors',
+        'support',
+        'funding',
+        'require',
+        'conflict',
+        'replace',
+        'provide',
+        'suggest',
+        'autoload',
+        'minimum-stability',
+        'prefer-stable',
+        'bin',
+        'archive',
+        'abandoned',
+        'non-feature-branches',
+        'config',
+        'extra',
+    ];
+
     private bool $backupEnabled = true;
     private string $backupPath = '.composer-unpeeled.json';
     private string $beforeTagCommitMessage = 'chore(dist): prepare Composer manifest for release';
@@ -32,6 +62,14 @@ final class Configuration
      */
     public function setPeelSections(array $peelSections): void
     {
+        foreach ($peelSections as $section) {
+            if (in_array($section, self::PROTECTED_SECTIONS, true)) {
+                throw new \RuntimeException(sprintf(
+                    "ERROR: The configured section \"%s\" is protected.\n\ncomposer-peel only permits development-oriented sections by default.",
+                    $section
+                ));
+            }
+        }
         $this->peelSections = $peelSections;
     }
 

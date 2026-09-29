@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Fixed
 - The status of Git working tree is checked.
+- Guard against the usage of non-dev Composer sections.
 
 ### Added
 - New `--format` option for the `peel` command.

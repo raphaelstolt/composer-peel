@@ -243,6 +243,11 @@ Only explicitly configured sections are peeled.
 This makes the behaviour predictable and allows each package to decide which metadata belongs exclusively to its
 development workflow.
 
+> [!NOTE]
+>
+> `composer-peel` only permits stripping development-oriented metadata. Attempting to configure protected sections
+> such as `require` or `autoload` will cause the operation to fail with an error.
+
 ### Release backup
 
 The release backup stores the original `composer.json` before it is peeled:
