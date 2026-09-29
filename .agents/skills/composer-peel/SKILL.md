@@ -49,6 +49,12 @@ Use a dry run to inspect the planned changes without modifying `composer.json`:
 vendor/bin/composer-peel peel --dry-run
 ```
 
+If you need the dry-run output in a machine-readable format, you can use the `--format=json` option:
+
+```bash
+vendor/bin/composer-peel peel --dry-run --format=json
+```
+
 Prefer this when:
 
 * the user asks what would be removed

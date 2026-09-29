@@ -64,6 +64,27 @@ class PeelCommandTest extends TestCase
         static::assertArrayHasKey('scripts-descriptions', $manifest);
     }
 
+    public function testExecuteDryRunJsonFormat(): void
+    {
+        TestCommand::for(new PeelCommand())
+            ->execute('--dry-run --format=json')
+            ->assertSuccessful()
+            ->assertOutputContains('"manifest": "composer.json"')
+            ->assertOutputContains('"configuration": "internal defaults"')
+            ->assertOutputContains('"removed_sections": [')
+            ->assertOutputContains('"require-dev"')
+            ->assertOutputContains('"autoload-dev"')
+            ->assertOutputContains('"scripts"')
+            ->assertOutputContains('"scripts-descriptions"');
+
+        $manifest = json_decode((string) file_get_contents('composer.json'), associative: true);
+
+        static::assertArrayHasKey('require-dev', $manifest);
+        static::assertArrayHasKey('autoload-dev', $manifest);
+        static::assertArrayHasKey('scripts', $manifest);
+        static::assertArrayHasKey('scripts-descriptions', $manifest);
+    }
+
     public function testExecute(): void
     {
         TestCommand::for(new PeelCommand())

@@ -138,6 +138,30 @@ Dry run completed. No files were modified.
 The values above are illustrative. The actual result depends on the contents of your `composer.json` and the configured
 peeling rules.
 
+If you need the dry-run output in a machine-readable format, you can use the `--format=json` option:
+
+```bash
+composer-peel peel --dry-run --format=json
+```
+
+```json
+{
+    "manifest": "composer.json",
+    "configuration": "internal defaults",
+    "removed_sections": [
+        "require-dev",
+        "autoload-dev",
+        "scripts",
+        "scripts-descriptions",
+        "scripts-aliases"
+    ],
+    "original_size_bytes": 2480,
+    "projected_size_bytes": 1120,
+    "reduction_bytes": 1360,
+    "reduction_percentage": 54.8
+}
+```
+
 ## Rolling back changes
 
 If a backup file was created during the `peel` process, you can restore `composer.json` to its original state using

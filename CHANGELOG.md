@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+### Added
+- New `--format` option for the `peel` command.
+
 ## [v1.3.0] - 2026-09-28
 
 ### Added

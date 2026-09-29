@@ -50,6 +50,14 @@ class PeelCommand extends Command
             InputOption::VALUE_NONE,
             "Simulate the metadata peeling without modifying composer.json",
         );
+
+        $this->addOption(
+            "format",
+            null,
+            InputOption::VALUE_REQUIRED,
+            "Output format for the dry run (text or json)",
+            "text"
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -90,7 +98,12 @@ class PeelCommand extends Command
         }
 
         if ($dryRun) {
-            return $this->printDryRunReport($configUsed, $output);
+            $format = $input->getOption('format');
+            if (!is_string($format) || !in_array($format, ['text', 'json'], true)) {
+                $output->writeln("<error>Invalid format specified. Allowed values are 'text' or 'json'.</error>");
+                return Command::FAILURE;
+            }
+            return $this->printDryRunReport($configUsed, $format, $output);
         }
 
         return $this->handlePeelWorkflow($output);
@@ -124,9 +137,27 @@ class PeelCommand extends Command
         }
     }
 
-    private function printDryRunReport(string $configUsed, OutputInterface $output): int
+    private function printDryRunReport(string $configUsed, string $format, OutputInterface $output): int
     {
         $result = $this->composerPeeler->simulatePeel();
+
+        $originalSize = $result->getOriginalSize();
+        $projectedSize = $result->getProjectedSize();
+        $reduction = $originalSize - $projectedSize;
+        $percentage = $originalSize > 0 ? ($reduction / $originalSize) * 100 : 0;
+
+        if ($format === 'json') {
+            $output->writeln((string) json_encode([
+                'manifest' => 'composer.json',
+                'configuration' => $configUsed,
+                'removed_sections' => $result->getRemovedSections(),
+                'original_size_bytes' => $originalSize,
+                'projected_size_bytes' => $projectedSize,
+                'reduction_bytes' => $reduction,
+                'reduction_percentage' => round($percentage, 1),
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            return Command::SUCCESS;
+        }
 
         $output->writeln('');
         $output->writeln("Manifest:      composer.json");
@@ -143,11 +174,6 @@ class PeelCommand extends Command
 
         $output->writeln('');
         
-        $originalSize = $result->getOriginalSize();
-        $projectedSize = $result->getProjectedSize();
-        $reduction = $originalSize - $projectedSize;
-        $percentage = $originalSize > 0 ? ($reduction / $originalSize) * 100 : 0;
-
         $output->writeln(sprintf("Original size:       %s bytes", number_format($originalSize)));
         $output->writeln(sprintf("Projected size:      %s bytes", number_format($projectedSize)));
         $output->writeln(sprintf("Estimated reduction: %s bytes (%.1f%%)", number_format($reduction), $percentage));
