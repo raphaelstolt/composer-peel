@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+## [v1.3.1] - 2026-09-29
+
 ### Fixed
 - The status of Git working tree is checked.
 - Guard against the usage of non-dev Composer sections.
@@ -35,7 +37,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Initial implementation.
 
 
-[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.1...HEAD
+[v1.3.1]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.0...v1.3.1
 [v1.3.0]: https://github.com/raphaelstolt/composer-peel/compare/v1.2.0...v1.3.0
 [v1.2.0]: https://github.com/raphaelstolt/composer-peel/compare/v1.1.0...v1.2.0
 [v1.1.0]: https://github.com/raphaelstolt/composer-peel/compare/v1.0.0...v1.1.0
