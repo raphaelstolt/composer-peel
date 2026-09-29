@@ -124,45 +124,6 @@ class PeelCommandTest extends TestCase
         static::assertFileExists('.composer-unpeeled.json');
     }
 
-    public function testExecuteReleaseThrowsErrorForInvalidSemver(): void
-    {
-        TestCommand::for(new PeelCommand())
-            ->execute('invalid-tag')
-            ->assertStatusCode(1)
-            ->assertOutputContains("The provided Git tag 'invalid-tag' is not a valid semantic version.");
-    }
 
-    public function testExecuteReleaseThrowsErrorForDirtyWorkingTree(): void
-    {
-        file_put_contents('composer.json', "\n", FILE_APPEND);
 
-        TestCommand::for(new PeelCommand())
-            ->execute('v1.0.0')
-            ->assertStatusCode(1)
-            ->assertOutputContains('The composer-peel release workflow requires a clean working tree.');
-    }
-
-    public function testExecuteRelease(): void
-    {
-        TestCommand::for(new PeelCommand())
-            ->execute('v1.0.0')
-            ->assertSuccessful()
-            ->assertOutputContains('Release workflow completed successfully for tag: v1.0.0.');
-
-        // Assert git tags and commits
-        exec('git log --oneline', $logOutput);
-        static::assertStringContainsString('chore: restore development Composer manifest', implode('
-', $logOutput));
-        static::assertStringContainsString('chore(dist): prepare Composer manifest for release', implode(
-            '
-',
-            $logOutput,
-        ));
-
-        exec('git tag', $tagOutput);
-        static::assertContains('v1.0.0', $tagOutput);
-
-        $manifest = json_decode((string) file_get_contents('composer.json'), associative: true);
-        static::assertArrayHasKey('require-dev', $manifest);
-    }
 }

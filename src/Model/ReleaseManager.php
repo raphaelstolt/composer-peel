@@ -8,14 +8,13 @@ use RuntimeException;
 
 class ReleaseManager
 {
-    private ComposerPeeler $peeler;
     private Configuration $configuration;
+    private ManifestValidator $manifestValidator;
 
-    public function __construct(ComposerPeeler $peeler, Configuration $configuration)
+    public function __construct(Configuration $configuration, ?ManifestValidator $manifestValidator = null)
     {
-        $this->peeler = $peeler;
         $this->configuration = $configuration;
-        $this->peeler->setConfiguration($this->configuration);
+        $this->manifestValidator = $manifestValidator ?? new ManifestValidator($configuration);
     }
 
     public function release(string $tag): void
@@ -29,19 +28,14 @@ class ReleaseManager
         }
 
         $this->verifyGitIsAvailable();
-        $this->verifyCleanWorkingTree();
+        $this->verifyOnlyManifestChanged();
 
-        $this->peeler->peel();
+        $this->manifestValidator->validate(getcwd() . '/composer.json', $this->configuration->getBackupPath());
 
         $this->executeGitCommand(['git', 'add', 'composer.json']);
         $this->executeGitCommand(['git', 'commit', '-m', $this->configuration->getBeforeTagCommitMessage()]);
 
         $this->executeGitCommand(['git', 'tag', $tag]);
-
-        $this->restoreManifest();
-
-        $this->executeGitCommand(['git', 'add', 'composer.json']);
-        $this->executeGitCommand(['git', 'commit', '-m', $this->configuration->getAfterTagCommitMessage()]);
     }
 
     private function isValidSemver(string $tag): bool
@@ -58,11 +52,18 @@ class ReleaseManager
         }
     }
 
-    private function verifyCleanWorkingTree(): void
+    private function verifyOnlyManifestChanged(): void
     {
-        exec('git status --porcelain', $output, $resultCode);
-        if ($resultCode !== 0 || count($output) > 0) {
+        exec('git status --porcelain --untracked-files=all', $output, $resultCode);
+        if ($resultCode !== 0) {
             throw new RuntimeException('The composer-peel release workflow requires a clean working tree.');
+        }
+
+        $allowedPaths = ['composer.json', $this->configuration->getBackupPath()];
+        foreach ($output as $line) {
+            if (!in_array(substr($line, 3), $allowedPaths, true)) {
+                throw new RuntimeException('The composer-peel release workflow requires a clean working tree.');
+            }
         }
     }
 
@@ -80,17 +81,11 @@ class ReleaseManager
         }
     }
 
-    private function restoreManifest(): void
+    public function commitRestoredManifest(): void
     {
-        $backupPath = $this->configuration->getBackupPath();
-        $manifestPath = getcwd() . '/composer.json';
+        $this->verifyGitIsAvailable();
 
-        if (!file_exists($backupPath)) {
-            throw new RuntimeException("Backup file not found at: {$backupPath}");
-        }
-
-        if (copy($backupPath, $manifestPath) === false) {
-            throw new RuntimeException('Failed to restore composer.json from backup.');
-        }
+        $this->executeGitCommand(['git', 'add', 'composer.json']);
+        $this->executeGitCommand(['git', 'commit', '-m', $this->configuration->getAfterTagCommitMessage()]);
     }
 }

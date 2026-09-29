@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+### Added
+- New dedicated `release` command.
+
 ## [v1.3.2] - 2026-09-29
 
 ### Fixed

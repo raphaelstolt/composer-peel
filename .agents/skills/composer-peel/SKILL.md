@@ -5,7 +5,7 @@ description: Use this skill when preparing a PHP Composer package for release, r
 
 # composer-peel
 
-Use `composer-peel` to prepare a PHP package's `composer.json` for distribution by temporarily removing configured Composer sections and, when requested, restoring the development manifest after a tagged release.
+Use `composer-peel` to prepare a PHP package's `composer.json` for distribution by temporarily removing configured Composer sections and, when requested, committing and tagging the peeled manifest and restoring the development manifest afterwards.
 
 ## When to Use
 
@@ -73,21 +73,31 @@ After peeling, inspect the resulting `composer.json` and verify that the remaini
 
 ### Tagged Release Workflow
 
-To execute the complete Git release workflow:
+The tagged release workflow consists of three commands:
 
 ```bash
-vendor/bin/composer-peel peel <tag>
+vendor/bin/composer-peel peel
+vendor/bin/composer-peel release <tag>
+vendor/bin/composer-peel rollback --commit
 ```
 
 For example:
 
 ```bash
-vendor/bin/composer-peel peel v1.0.0
+vendor/bin/composer-peel peel
+vendor/bin/composer-peel release v1.0.0
+vendor/bin/composer-peel rollback --commit
 ```
 
-The release workflow handles the configured backup, peeling, Git commit/tag operations, and restoration of the development manifest.
+1. `peel` creates the backup and removes the configured sections from `composer.json`.
+2. `release <tag>` commits the already peeled `composer.json` using the `before_tag` commit message and creates the Git tag. It does not peel and does not restore the development manifest.
+3. `rollback --commit` restores the development `composer.json` from the backup and commits it using the `after_tag` commit message.
 
-Only use this command when the user explicitly requests a release/tag operation.
+`release` requires a clean working tree. The only allowed changes are the peeled `composer.json` and the backup file. Other uncommitted or untracked files cause the command to fail.
+
+Before committing, `release` validates the peeled `composer.json` against the backup file: configured peel sections must be removed, all other sections must be identical to the backup, and `composer validate --no-check-lock` must not report errors (the `composer` binary must be available). If validation fails, no commit or tag is created; fix the manifest (e.g., via `rollback` and a fresh `peel`) instead of editing it by hand.
+
+Only use these commands when the user explicitly requests a release/tag operation.
 
 The tag must be a valid semantic version such as:
 
@@ -110,6 +120,16 @@ To preserve the backup file after restoration:
 ```bash
 vendor/bin/composer-peel rollback --keep-backup
 ```
+
+To commit the restored `composer.json` to Git using the configured `after_tag` commit message:
+
+```bash
+vendor/bin/composer-peel rollback --commit
+```
+
+`--commit` can be combined with `--keep-backup`. If the commit fails (e.g., outside a Git repository), the command exits with an error and the backup file is kept, while `composer.json` has already been restored.
+
+Only use `--commit` as part of a tagged release workflow or when the user explicitly asks for the restoration to be committed.
 
 ## Configuration
 
@@ -188,17 +208,31 @@ For a tagged release:
 
 2. Inspect the current Composer and `composer-peel` configuration.
 
-3. Preview the peeling operation if appropriate.
+3. Ensure the working tree is clean.
 
-4. Run:
+4. Preview the peeling operation if appropriate.
+
+5. Peel the manifest:
 
    ```bash
-   vendor/bin/composer-peel peel <tag>
+   vendor/bin/composer-peel peel
    ```
 
-5. Verify the resulting Git state and tag.
+6. Inspect the resulting `composer.json`.
 
-6. Confirm that the development Composer manifest has been restored.
+7. Commit the peeled manifest and create the tag:
+
+   ```bash
+   vendor/bin/composer-peel release <tag>
+   ```
+
+8. Restore and commit the development manifest:
+
+   ```bash
+   vendor/bin/composer-peel rollback --commit
+   ```
+
+9. Verify the resulting Git state and tag, and confirm that the development Composer manifest has been restored.
 
 For a rollback request:
 
@@ -208,24 +242,27 @@ For a rollback request:
    ```bash
    vendor/bin/composer-peel rollback
    ```
+
+   Add `--commit` only when the restored manifest should be committed to Git.
 3. Inspect `composer.json` to confirm it has been fully restored.
 
 ## Important Distinction
 
-There are two different operations:
+There are three different operations:
 
 ```text
 peel
+  ├── backup
   └── modifies composer.json
 
-peel <tag>
-  └── performs the configured release workflow
-      ├── backup
-      ├── peel
-      ├── commit
-      ├── tag
-      ├── restore
-      └── commit
+release <tag>
+  ├── commit (peeled composer.json)
+  └── tag
+
+rollback [--commit]
+  ├── restore composer.json from backup
+  ├── commit (only with --commit)
+  └── remove backup (unless --keep-backup)
 ```
 
 Do not substitute the release workflow for a normal peeling operation.
@@ -243,7 +280,8 @@ After a non-release peel, validate the resulting manifest and check that:
 After a release workflow, additionally verify:
 
 * the expected tag was created
-* the development manifest was restored
+* the tag points to the peeled manifest commit
+* the development manifest was restored and committed
 * the working tree is in the expected state
 
 ## Principles

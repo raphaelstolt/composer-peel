@@ -6,7 +6,6 @@ namespace Stolt\ComposerPeel\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use Stolt\ComposerPeel\Model\ComposerPeeler;
 use Stolt\ComposerPeel\Model\Configuration;
 use Stolt\ComposerPeel\Model\ReleaseManager;
 
@@ -14,11 +13,10 @@ class ReleaseManagerTest extends TestCase
 {
     public function testReleaseThrowsExceptionIfBackupDisabled(): void
     {
-        $peeler = $this->createStub(ComposerPeeler::class);
         $config = new Configuration();
         $config->setBackupEnabled(false);
 
-        $manager = new ReleaseManager($peeler, $config);
+        $manager = new ReleaseManager($config);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Release workflow requires backup to be enabled.');
@@ -28,10 +26,9 @@ class ReleaseManagerTest extends TestCase
 
     public function testReleaseThrowsExceptionIfTagIsNotValidSemver(): void
     {
-        $peeler = $this->createStub(ComposerPeeler::class);
         $config = new Configuration();
 
-        $manager = new ReleaseManager($peeler, $config);
+        $manager = new ReleaseManager($config);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage("The provided Git tag 'invalid-tag' is not a valid semantic version.");

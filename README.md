@@ -186,6 +186,16 @@ to keep the backup file, use the `--keep-backup` option:
 composer-peel rollback --keep-backup
 ```
 
+To commit the restored `composer.json` to Git right away, use the `--commit` option. The commit uses the configured
+`after_tag` [commit message](#git-commit-messages):
+
+```bash
+composer-peel rollback --commit
+```
+
+The `--commit` option can be combined with `--keep-backup`. If the commit fails, e.g. because the current directory is
+not a Git repository, the command exits with an error and the backup file is kept.
+
 You can also specify a custom backup file or configuration file during rollback:
 
 ```bash
@@ -288,27 +298,43 @@ The automated release workflow uses configurable commit messages:
 
 `before_tag` is used for the commit containing the peeled manifest.
 
-`after_tag` is used for the commit restoring the original development manifest.
+`after_tag` is used by `rollback --commit` for the commit restoring the original development manifest.
 
 ## Release workflow
 
-`composer-peel` can automate the process of preparing a peeled manifest for a Git-tagged release while restoring the
-original development manifest afterwards.
+Use the `release` command to commit the already peeled `composer.json` and create a Git tag for the release.
 
-Run:
+Before running `release`, prepare the release manifest with the `peel` command:
 
 ```bash
-composer-peel peel v1.0.0
+composer-peel peel
+composer-peel release v1.0.0
+composer-peel rollback --commit
 ```
 
 The workflow is:
 
-1. Back up the original `composer.json`, if enabled.
-2. Generate the peeled manifest.
-3. Commit the peeled manifest.
-4. Create the release tag.
-5. Restore the original manifest.
-6. Commit the restored manifest.
+1. Run `peel` to remove the configured development-only sections from `composer.json`.
+2. Run `release` to commit the peeled manifest and create the Git tag.
+3. Run `rollback --commit` to restore the original development `composer.json` and commit the changes.
+
+The `release` command requires a clean working tree. The only allowed changes are the peeled `composer.json` and the
+backup file created by `peel`.
+
+Before committing, the `release` command validates the peeled `composer.json` against the backup file created by `peel`.
+The release is aborted without creating a commit or tag if:
+
+* the backup file does not exist, i.e. `peel` has not been run,
+* `composer.json` or the backup file does not contain valid JSON,
+* a configured peel section is still present in `composer.json`,
+* any other section is missing, has been added, or differs from the backup.
+* `composer validate --no-check-lock` reports errors for the peeled `composer.json`.
+
+The `composer` binary therefore needs to be available on the `PATH`. Warnings reported by `composer validate` do not
+abort the release, but errors, including publish errors like a missing `description`, do. The lock file is not checked,
+because it is expected to still contain the peeled development dependencies.
+
+The commit messages used for the release workflow can be configured through `.composer-peel.php`.
 
 The resulting history looks like this:
 

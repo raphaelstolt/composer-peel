@@ -10,10 +10,8 @@ use SebastianBergmann\Diff\Output\StrictUnifiedDiffOutputBuilder;
 use Stolt\ComposerPeel\Model\ComposerPeeler;
 use Stolt\ComposerPeel\Model\Configuration;
 use Stolt\ComposerPeel\Model\ConfigurationLoader;
-use Stolt\ComposerPeel\Model\ReleaseManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -25,23 +23,15 @@ use Symfony\Component\Console\Output\OutputInterface;
 class PeelCommand extends Command
 {
     private ComposerPeeler $composerPeeler;
-    private ?ReleaseManager $releaseManager;
 
-    public function __construct(?ComposerPeeler $composerPeeler = null, ?ReleaseManager $releaseManager = null)
+    public function __construct(?ComposerPeeler $composerPeeler = null)
     {
         $this->composerPeeler = $composerPeeler ?? new ComposerPeeler();
-        $this->releaseManager = $releaseManager;
         parent::__construct();
     }
 
     protected function configure(): void
     {
-        $this->addArgument(
-            "tag",
-            InputArgument::OPTIONAL,
-            "The Git tag to create for this release"
-        );
-
         $this->addOption("backup-file", null, InputOption::VALUE_REQUIRED, "Name of the composer.json backup file");
 
         $this->addOption("config", null, InputOption::VALUE_REQUIRED, "Path to the configuration file");
@@ -101,20 +91,11 @@ class PeelCommand extends Command
         $this->composerPeeler->setConfiguration($configuration);
 
         $dryRun = (bool) $input->getOption("dry-run");
-        $tag = $input->getArgument("tag");
         $showDiff = (bool) $input->getOption("diff");
 
         if ($showDiff && !$dryRun) {
             $output->writeln("<error>The --diff option can only be used with --dry-run.</error>");
             return Command::FAILURE;
-        }
-
-        if (is_string($tag)) {
-            if ($dryRun) {
-                $output->writeln("<error>The --dry-run option cannot be used when executing the release workflow.</error>");
-                return Command::FAILURE;
-            }
-            return $this->handleReleaseWorkflow($tag, $configuration, $output);
         }
 
         if ($dryRun) {
@@ -127,22 +108,6 @@ class PeelCommand extends Command
         }
 
         return $this->handlePeelWorkflow($output);
-    }
-
-    private function handleReleaseWorkflow(string $tag, Configuration $configuration, OutputInterface $output): int
-    {
-        if ($this->releaseManager === null) {
-            $this->releaseManager = new ReleaseManager($this->composerPeeler, $configuration);
-        }
-        
-        try {
-            $this->releaseManager->release($tag);
-            $output->writeln("Release workflow completed successfully for tag: {$tag}.");
-            return Command::SUCCESS;
-        } catch (RuntimeException $e) {
-            $output->writeln("<error>" . $e->getMessage() . "</error>");
-            return Command::FAILURE;
-        }
     }
 
     private function handlePeelWorkflow(OutputInterface $output): int

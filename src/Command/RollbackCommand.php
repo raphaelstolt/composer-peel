@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Stolt\ComposerPeel\Command;
 
+use RuntimeException;
 use Stolt\ComposerPeel\Model\Configuration;
 use Stolt\ComposerPeel\Model\ConfigurationLoader;
+use Stolt\ComposerPeel\Model\ReleaseManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -15,6 +17,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[AsCommand(name: 'rollback', description: 'Restores the composer.json manifest from a backup file')]
 class RollbackCommand extends Command
 {
+    private ?ReleaseManager $releaseManager;
+
+    public function __construct(?ReleaseManager $releaseManager = null)
+    {
+        $this->releaseManager = $releaseManager;
+        parent::__construct();
+    }
+
     protected function configure(): void
     {
         $this->addOption(
@@ -22,6 +32,13 @@ class RollbackCommand extends Command
             null,
             InputOption::VALUE_NONE,
             'Do not delete the backup file after restoration',
+        );
+
+        $this->addOption(
+            'commit',
+            null,
+            InputOption::VALUE_NONE,
+            'Commit the restored composer.json to Git',
         );
 
         $this->addOption('backup-file', null, InputOption::VALUE_REQUIRED, 'Name of the composer.json backup file');
@@ -92,16 +109,31 @@ class RollbackCommand extends Command
             return Command::FAILURE;
         }
 
-        $output->writeln('<info>✓ composer.json restored</info>');
+        $output->writeln('composer.json restored successfully.');
+
+        if ($input->getOption('commit')) {
+            if ($this->releaseManager === null) {
+                $this->releaseManager = new ReleaseManager($configuration);
+            }
+
+            try {
+                $this->releaseManager->commitRestoredManifest();
+            } catch (RuntimeException $e) {
+                $output->writeln('<error>' . $e->getMessage() . '</error>');
+                return Command::FAILURE;
+            }
+
+            $output->writeln('Restored composer.json committed successfully.');
+        }
 
         if (!$input->getOption('keep-backup')) {
             unlink($backupPath);
-            $output->writeln('<info>✓ Backup removed</info>');
+            $output->writeln('Backup removed successfully.');
 
             return Command::SUCCESS;
         }
 
-        $output->writeln('<info>✓ Backup kept</info>');
+        $output->writeln('Backup kept.');
 
         return Command::SUCCESS;
     }
