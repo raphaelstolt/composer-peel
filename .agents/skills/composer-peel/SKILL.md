@@ -71,12 +71,27 @@ vendor/bin/composer-peel peel
 
 After peeling, inspect the resulting `composer.json` and verify that the remaining manifest still represents the intended distributable package.
 
+### Validate the Peeled Manifest
+
+To verify the peeled `composer.json`:
+
+```bash
+vendor/bin/composer-peel validate
+```
+
+This checks that `composer.json` and the backup file contain valid JSON objects, the backup exists when backups are enabled, no configured section is still present, the required runtime sections `name` and `require` exist, all other sections are unchanged compared to the backup, and `composer validate --no-check-lock` reports no errors for both manifests. Each check is reported as `[PASS]`, `[FAIL]`, or `[SKIP]`, and the command exits non-zero if any check fails.
+
+If the `composer` binary is not available, use `--skip-composer-validate` and mention to the user that the Composer checks were skipped.
+
+The command does not modify any files and is safe to run at any time.
+
 ### Tagged Release Workflow
 
-The tagged release workflow consists of three commands:
+The tagged release workflow consists of the following commands:
 
 ```bash
 vendor/bin/composer-peel peel
+vendor/bin/composer-peel validate
 vendor/bin/composer-peel release <tag>
 vendor/bin/composer-peel rollback --commit
 ```
@@ -85,17 +100,19 @@ For example:
 
 ```bash
 vendor/bin/composer-peel peel
+vendor/bin/composer-peel validate
 vendor/bin/composer-peel release v1.0.0
 vendor/bin/composer-peel rollback --commit
 ```
 
 1. `peel` creates the backup and removes the configured sections from `composer.json`.
-2. `release <tag>` commits the already peeled `composer.json` using the `before_tag` commit message and creates the Git tag. It does not peel and does not restore the development manifest.
-3. `rollback --commit` restores the development `composer.json` from the backup and commits it using the `after_tag` commit message.
+2. `validate` reports on the peeled `composer.json` without modifying anything.
+3. `release <tag>` commits the already peeled `composer.json` using the `before_tag` commit message and creates the Git tag. It does not peel and does not restore the development manifest.
+4. `rollback --commit` restores the development `composer.json` from the backup and commits it using the `after_tag` commit message.
 
 `release` requires a clean working tree. The only allowed changes are the peeled `composer.json` and the backup file. Other uncommitted or untracked files cause the command to fail.
 
-Before committing, `release` validates the peeled `composer.json` against the backup file: configured peel sections must be removed, all other sections must be identical to the backup, and `composer validate --no-check-lock` must not report errors (the `composer` binary must be available). If validation fails, no commit or tag is created; fix the manifest (e.g., via `rollback` and a fresh `peel`) instead of editing it by hand.
+Before committing, `release` runs the same checks as `validate`, and additionally always requires the backup file (the `composer` binary must be available). If validation fails, no commit or tag is created; fix the manifest (e.g., via `rollback` and a fresh `peel`) instead of editing it by hand.
 
 Only use these commands when the user explicitly requests a release/tag operation.
 
@@ -198,9 +215,13 @@ For a normal peeling request:
    vendor/bin/composer-peel peel
    ```
 
-5. Inspect the resulting `composer.json`.
+5. Validate the resulting `composer.json`:
 
-6. Run appropriate Composer/package validation.
+   ```bash
+   vendor/bin/composer-peel validate
+   ```
+
+6. Inspect the resulting `composer.json` and run any additional package validation the project requires.
 
 For a tagged release:
 
@@ -218,7 +239,11 @@ For a tagged release:
    vendor/bin/composer-peel peel
    ```
 
-6. Inspect the resulting `composer.json`.
+6. Validate the peeled manifest and fix any reported failures before continuing:
+
+   ```bash
+   vendor/bin/composer-peel validate
+   ```
 
 7. Commit the peeled manifest and create the tag:
 
@@ -248,14 +273,18 @@ For a rollback request:
 
 ## Important Distinction
 
-There are three different operations:
+There are four different operations:
 
 ```text
 peel
   ├── backup
   └── modifies composer.json
 
+validate
+  └── verifies the peeled composer.json (read-only)
+
 release <tag>
+  ├── validate
   ├── commit (peeled composer.json)
   └── tag
 
@@ -269,7 +298,7 @@ Do not substitute the release workflow for a normal peeling operation.
 
 ## Validation
 
-After a non-release peel, validate the resulting manifest and check that:
+After a non-release peel, run `vendor/bin/composer-peel validate` and check that:
 
 * required runtime dependencies are still present
 * package metadata required for distribution remains present

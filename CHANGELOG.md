@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Added
 - New dedicated `release` command.
+- New `validate` command verifying the peeled `composer.json`, which is also run by the `release` command.
+- New `--commit` option for the `rollback` command.
 
 ## [v1.3.2] - 2026-09-29
 

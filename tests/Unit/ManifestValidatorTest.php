@@ -8,6 +8,8 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Stolt\ComposerPeel\Model\Configuration;
 use Stolt\ComposerPeel\Model\ManifestValidator;
+use Stolt\ComposerPeel\Model\ValidationCheck;
+use Stolt\ComposerPeel\Model\ValidationResult;
 
 class ManifestValidatorTest extends TestCase
 {
@@ -87,76 +89,153 @@ class ManifestValidatorTest extends TestCase
         $this->validator->validate('composer.json', '.composer-unpeeled.json');
     }
 
-    public function testValidateThrowsExceptionIfPeelSectionIsStillPresent(): void
+    public function testCheckPassesAllChecksForCorrectlyPeeledManifest(): void
+    {
+        $this->writeManifests($this->peeledManifest, $this->backupManifest);
+
+        $result = $this->validator->check('composer.json', '.composer-unpeeled.json');
+
+        static::assertTrue($result->isValid());
+        static::assertSame([], $result->getViolations());
+        static::assertSame(
+            [
+                'composer.json contains valid JSON',
+                'Backup .composer-unpeeled.json exists',
+                'Backup .composer-unpeeled.json contains valid JSON',
+                'Configured sections are absent',
+                'Required runtime sections exist',
+                'Runtime sections match the backup',
+                'composer validate reports no errors for composer.json',
+                'composer validate reports no errors for .composer-unpeeled.json',
+            ],
+            array_map(static fn(ValidationCheck $check): string => $check->getDescription(), $result->getChecks()),
+        );
+    }
+
+    public function testCheckFailsIfPeelSectionIsStillPresent(): void
     {
         $this->writeManifests(
             [...$this->peeledManifest, 'require-dev' => ['phpunit/phpunit' => '^10.0']],
             $this->backupManifest,
         );
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage("Section 'require-dev' has not been peeled.");
-
-        $this->validator->validate('composer.json', '.composer-unpeeled.json');
+        $this->assertViolations(["Section 'require-dev' has not been peeled."]);
     }
 
-    public function testValidateThrowsExceptionIfRuntimeSectionIsMissing(): void
+    public function testCheckFailsIfConfiguredSectionIsRetainedWithoutBeingInBackup(): void
+    {
+        $backupManifest = $this->backupManifest;
+        unset($backupManifest['scripts']);
+
+        $this->writeManifests([...$this->peeledManifest, 'scripts' => ['test' => 'phpunit']], $backupManifest);
+
+        $this->assertViolations(["Section 'scripts' has not been peeled."]);
+    }
+
+    public function testCheckFailsIfRequiredRuntimeSectionIsMissing(): void
+    {
+        $peeledManifest = $this->peeledManifest;
+        $backupManifest = $this->backupManifest;
+        unset($peeledManifest['require'], $backupManifest['require']);
+
+        $this->writeManifests($peeledManifest, $backupManifest);
+
+        $this->assertViolations(["Required runtime section 'require' is missing."]);
+    }
+
+    public function testCheckFailsIfRuntimeSectionIsMissing(): void
     {
         $peeledManifest = $this->peeledManifest;
         unset($peeledManifest['autoload']);
 
         $this->writeManifests($peeledManifest, $this->backupManifest);
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage("Section 'autoload' is missing.");
-
-        $this->validator->validate('composer.json', '.composer-unpeeled.json');
+        $this->assertViolations(["Section 'autoload' is missing."]);
     }
 
-    public function testValidateThrowsExceptionIfRuntimeSectionDiffersFromBackup(): void
+    public function testCheckFailsIfRuntimeSectionDiffersFromBackup(): void
     {
         $this->writeManifests(
             [...$this->peeledManifest, 'require' => ['php' => '>=8.3']],
             $this->backupManifest,
         );
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage("Section 'require' differs from the backup.");
-
-        $this->validator->validate('composer.json', '.composer-unpeeled.json');
+        $this->assertViolations(["Section 'require' differs from the backup."]);
     }
 
-    public function testValidateThrowsExceptionIfSectionIsNotPresentInBackup(): void
+    public function testCheckFailsIfSectionIsNotPresentInBackup(): void
     {
         $this->writeManifests(
             [...$this->peeledManifest, 'homepage' => 'https://example.com'],
             $this->backupManifest,
         );
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage("Section 'homepage' is not present in the backup.");
-
-        $this->validator->validate('composer.json', '.composer-unpeeled.json');
+        $this->assertViolations(["Section 'homepage' is not present in the backup."]);
     }
 
-    public function testValidateReportsAllViolations(): void
+    public function testCheckReportsAllViolations(): void
     {
         $this->writeManifests(
             ['name' => 'test/package', 'description' => 'A test package', 'license' => 'MIT', 'scripts' => ['test' => 'phpunit']],
             $this->backupManifest,
         );
 
-        try {
-            $this->validator->validate('composer.json', '.composer-unpeeled.json');
-            static::fail('Expected validation to fail.');
-        } catch (RuntimeException $e) {
-            static::assertStringContainsString("Section 'scripts' has not been peeled.", $e->getMessage());
-            static::assertStringContainsString("Section 'require' is missing.", $e->getMessage());
-            static::assertStringContainsString("Section 'autoload' is missing.", $e->getMessage());
-        }
+        $this->assertViolations([
+            "Section 'scripts' has not been peeled.",
+            "Required runtime section 'require' is missing.",
+            "Section 'require' is missing.",
+            "Section 'autoload' is missing.",
+        ]);
     }
 
-    public function testValidateRespectsConfiguredPeelSections(): void
+    public function testCheckFailsIfManifestIsJsonArray(): void
+    {
+        $this->writeManifests(['test/package'], $this->backupManifest);
+
+        $this->assertViolations(['Manifest composer.json does not contain a valid JSON object.']);
+    }
+
+    public function testCheckFailsIfBackupIsExpectedButMissing(): void
+    {
+        file_put_contents('composer.json', (string) json_encode($this->peeledManifest));
+
+        $result = $this->validator->check('composer.json', '.composer-unpeeled.json', runComposerValidate: false);
+
+        static::assertFalse($result->isValid());
+        static::assertSame(['Backup file .composer-unpeeled.json does not exist.'], $result->getViolations());
+        static::assertSame(ValidationCheck::SKIPPED, $this->findCheck($result, 'Runtime sections match the backup')->getStatus());
+    }
+
+    public function testCheckSkipsBackupChecksIfBackupIsDisabled(): void
+    {
+        $configuration = new Configuration();
+        $configuration->setBackupEnabled(false);
+
+        file_put_contents('composer.json', (string) json_encode($this->peeledManifest));
+
+        $result = (new ManifestValidator($configuration))->check(
+            'composer.json',
+            '.composer-unpeeled.json',
+            runComposerValidate: false,
+        );
+
+        static::assertTrue($result->isValid());
+        static::assertSame(
+            ValidationCheck::SKIPPED,
+            $this->findCheck($result, 'Backup .composer-unpeeled.json exists')->getStatus(),
+        );
+        static::assertSame(ValidationCheck::SKIPPED, $this->findCheck($result, 'Runtime sections match the backup')->getStatus());
+    }
+
+    public function testCheckFailsIfBackupIsInvalidJson(): void
+    {
+        file_put_contents('composer.json', (string) json_encode($this->peeledManifest));
+        file_put_contents('.composer-unpeeled.json', 'invalid json');
+
+        $this->assertViolations(['Manifest .composer-unpeeled.json does not contain a valid JSON object.']);
+    }
+
+    public function testCheckRespectsConfiguredPeelSections(): void
     {
         $configuration = new Configuration();
         $configuration->setPeelSections(['require-dev']);
@@ -166,9 +245,30 @@ class ManifestValidatorTest extends TestCase
             $this->backupManifest,
         );
 
-        (new ManifestValidator($configuration))->validate('composer.json', '.composer-unpeeled.json');
+        $result = (new ManifestValidator($configuration))->check(
+            'composer.json',
+            '.composer-unpeeled.json',
+            runComposerValidate: false,
+        );
 
-        $this->expectNotToPerformAssertions();
+        static::assertTrue($result->isValid());
+    }
+
+    public function testValidateReportsAllViolations(): void
+    {
+        $this->writeManifests(
+            [...$this->peeledManifest, 'require-dev' => ['phpunit/phpunit' => '^10.0'], 'require' => ['php' => '>=8.3']],
+            $this->backupManifest,
+        );
+
+        try {
+            $this->validator->validate('composer.json', '.composer-unpeeled.json');
+            static::fail('Expected validation to fail.');
+        } catch (RuntimeException $e) {
+            static::assertStringStartsWith('The peeled composer.json is invalid:', $e->getMessage());
+            static::assertStringContainsString("Section 'require-dev' has not been peeled.", $e->getMessage());
+            static::assertStringContainsString("Section 'require' differs from the backup.", $e->getMessage());
+        }
     }
 
     public function testValidateThrowsExceptionIfComposerValidateFails(): void
@@ -179,7 +279,7 @@ class ManifestValidatorTest extends TestCase
         $this->writeManifests($peeledManifest, $backupManifest);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('The peeled composer.json failed composer validate:');
+        $this->expectExceptionMessage('composer validate failed for composer.json:');
 
         $this->validator->validate('composer.json', '.composer-unpeeled.json');
     }
@@ -208,6 +308,28 @@ class ManifestValidatorTest extends TestCase
         $this->expectExceptionMessage('Composer is not available or not installed.');
 
         $validator->validate('composer.json', '.composer-unpeeled.json');
+    }
+
+    /**
+     * @param array<int, string> $expectedViolations
+     */
+    private function assertViolations(array $expectedViolations): void
+    {
+        $result = $this->validator->check('composer.json', '.composer-unpeeled.json', runComposerValidate: false);
+
+        static::assertFalse($result->isValid());
+        static::assertSame($expectedViolations, $result->getViolations());
+    }
+
+    private function findCheck(ValidationResult $result, string $description): ValidationCheck
+    {
+        foreach ($result->getChecks() as $check) {
+            if ($check->getDescription() === $description) {
+                return $check;
+            }
+        }
+
+        static::fail("Check '{$description}' not found.");
     }
 
     /**

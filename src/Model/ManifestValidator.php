@@ -8,8 +8,11 @@ use RuntimeException;
 
 class ManifestValidator
 {
+    public const REQUIRED_RUNTIME_SECTIONS = ['name', 'require'];
+
     private Configuration $configuration;
     private string $composerBinary;
+    private ?bool $composerAvailable = null;
 
     public function __construct(Configuration $configuration, string $composerBinary = 'composer')
     {
@@ -18,7 +21,7 @@ class ManifestValidator
     }
 
     /**
-     * Validates the peeled manifest against the unpeeled backup manifest and via composer validate.
+     * Validates the peeled manifest for a release, which always requires a backup.
      *
      * @throws RuntimeException
      */
@@ -30,38 +33,154 @@ class ManifestValidator
             );
         }
 
-        $peeledManifest = $this->decodeManifest($manifestPath);
-        $backupManifest = $this->decodeManifest($backupPath);
+        $result = $this->check($manifestPath, $backupPath);
 
+        if (!$result->isValid()) {
+            throw new RuntimeException(
+                'The peeled composer.json is invalid:' . PHP_EOL . '  - '
+                . implode(PHP_EOL . '  - ', $result->getViolations()),
+            );
+        }
+    }
+
+    public function check(string $manifestPath, string $backupPath, bool $runComposerValidate = true): ValidationResult
+    {
+        $result = new ValidationResult();
+
+        $manifest = $this->decodeManifest($manifestPath);
+        if (is_string($manifest)) {
+            $result->add(ValidationCheck::failed("{$manifestPath} contains valid JSON", [$manifest]));
+        } else {
+            $result->add(ValidationCheck::passed("{$manifestPath} contains valid JSON"));
+        }
+
+        $backup = $this->checkBackup($result, $backupPath);
+
+        if (is_string($manifest)) {
+            return $result;
+        }
+
+        $result->add($this->checkConfiguredSectionsAreAbsent($manifest));
+        $result->add($this->checkRequiredRuntimeSectionsExist($manifest));
+
+        if ($backup === null) {
+            $result->add(ValidationCheck::skipped('Runtime sections match the backup', 'No backup available.'));
+        } else {
+            $result->add($this->checkRuntimeSectionsMatchBackup($manifest, $backup));
+        }
+
+        if (!$runComposerValidate) {
+            $result->add(ValidationCheck::skipped('composer validate reports no errors', 'Skipped on request.'));
+            return $result;
+        }
+
+        $result->add($this->checkComposerValidate($manifestPath));
+        if ($backup !== null) {
+            $result->add($this->checkComposerValidate($backupPath));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function checkBackup(ValidationResult $result, string $backupPath): ?array
+    {
+        if (!file_exists($backupPath)) {
+            if ($this->configuration->isBackupEnabled()) {
+                $result->add(ValidationCheck::failed(
+                    "Backup {$backupPath} exists",
+                    ["Backup file {$backupPath} does not exist."],
+                ));
+            } else {
+                $result->add(ValidationCheck::skipped("Backup {$backupPath} exists", 'Backup is disabled.'));
+            }
+
+            return null;
+        }
+
+        $result->add(ValidationCheck::passed("Backup {$backupPath} exists"));
+
+        $backup = $this->decodeManifest($backupPath);
+        if (is_string($backup)) {
+            $result->add(ValidationCheck::failed("Backup {$backupPath} contains valid JSON", [$backup]));
+            return null;
+        }
+
+        $result->add(ValidationCheck::passed("Backup {$backupPath} contains valid JSON"));
+
+        return $backup;
+    }
+
+    /**
+     * @param array<string, mixed> $manifest
+     */
+    private function checkConfiguredSectionsAreAbsent(array $manifest): ValidationCheck
+    {
         $violations = [];
-        $peelSections = $this->configuration->getPeelSections();
-
-        foreach ($peelSections as $section) {
-            if (!array_key_exists($section, $peeledManifest)) {
+        foreach ($this->configuration->getPeelSections() as $section) {
+            if (!array_key_exists($section, $manifest)) {
                 continue;
             }
 
             $violations[] = "Section '{$section}' has not been peeled.";
         }
 
-        $sections = array_unique([...array_keys($backupManifest), ...array_keys($peeledManifest)]);
+        if ($violations !== []) {
+            return ValidationCheck::failed('Configured sections are absent', $violations);
+        }
+
+        return ValidationCheck::passed('Configured sections are absent');
+    }
+
+    /**
+     * @param array<string, mixed> $manifest
+     */
+    private function checkRequiredRuntimeSectionsExist(array $manifest): ValidationCheck
+    {
+        $violations = [];
+        foreach (self::REQUIRED_RUNTIME_SECTIONS as $section) {
+            if (array_key_exists($section, $manifest)) {
+                continue;
+            }
+
+            $violations[] = "Required runtime section '{$section}' is missing.";
+        }
+
+        if ($violations !== []) {
+            return ValidationCheck::failed('Required runtime sections exist', $violations);
+        }
+
+        return ValidationCheck::passed('Required runtime sections exist');
+    }
+
+    /**
+     * @param array<string, mixed> $manifest
+     * @param array<string, mixed> $backup
+     */
+    private function checkRuntimeSectionsMatchBackup(array $manifest, array $backup): ValidationCheck
+    {
+        $violations = [];
+        $peelSections = $this->configuration->getPeelSections();
+        $sections = array_unique([...array_keys($backup), ...array_keys($manifest)]);
 
         foreach ($sections as $section) {
             if (in_array($section, $peelSections, true)) {
                 continue;
             }
 
-            if (!array_key_exists($section, $peeledManifest)) {
+            if (!array_key_exists($section, $manifest)) {
                 $violations[] = "Section '{$section}' is missing.";
                 continue;
             }
 
-            if (!array_key_exists($section, $backupManifest)) {
+            if (!array_key_exists($section, $backup)) {
                 $violations[] = "Section '{$section}' is not present in the backup.";
                 continue;
             }
 
-            if ($peeledManifest[$section] === $backupManifest[$section]) {
+            if ($manifest[$section] === $backup[$section]) {
                 continue;
             }
 
@@ -69,51 +188,58 @@ class ManifestValidator
         }
 
         if ($violations !== []) {
-            throw new RuntimeException(
-                'The peeled composer.json is invalid:' . PHP_EOL . '  - ' . implode(PHP_EOL . '  - ', $violations),
-            );
+            return ValidationCheck::failed('Runtime sections match the backup', $violations);
         }
 
-        $this->runComposerValidate($manifestPath);
+        return ValidationCheck::passed('Runtime sections match the backup');
     }
 
-    private function runComposerValidate(string $manifestPath): void
+    private function checkComposerValidate(string $path): ValidationCheck
     {
-        exec(escapeshellarg($this->composerBinary) . ' --version 2>&1', $output, $resultCode);
-        if ($resultCode !== 0) {
-            throw new RuntimeException('Composer is not available or not installed.');
+        $description = "composer validate reports no errors for {$path}";
+
+        if ($this->composerAvailable === null) {
+            exec(escapeshellarg($this->composerBinary) . ' --version 2>&1', $output, $resultCode);
+            $this->composerAvailable = $resultCode === 0;
         }
 
-        $command = [$this->composerBinary, 'validate', '--no-check-lock', '--no-interaction', $manifestPath];
+        if (!$this->composerAvailable) {
+            return ValidationCheck::failed($description, ['Composer is not available or not installed.']);
+        }
+
+        $command = [$this->composerBinary, 'validate', '--no-check-lock', '--no-interaction', $path];
         $escapedCommand = implode(' ', array_map('escapeshellarg', $command));
 
         $output = [];
         exec($escapedCommand . ' 2>&1', $output, $resultCode);
 
         if ($resultCode !== 0) {
-            throw new RuntimeException(
-                'The peeled composer.json failed composer validate:' . PHP_EOL . implode(PHP_EOL, $output),
+            return ValidationCheck::failed(
+                $description,
+                ["composer validate failed for {$path}:" . PHP_EOL . implode(PHP_EOL, $output)],
             );
         }
+
+        return ValidationCheck::passed($description);
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, mixed>|string The decoded manifest or an error message
      */
-    private function decodeManifest(string $path): array
+    private function decodeManifest(string $path): array|string
     {
         if (!file_exists($path)) {
-            throw new RuntimeException("Manifest {$path} does not exist.");
+            return "Manifest {$path} does not exist.";
         }
 
         $content = file_get_contents($path);
         if ($content === false) {
-            throw new RuntimeException("Failed to read manifest {$path}.");
+            return "Failed to read manifest {$path}.";
         }
 
         $manifest = json_decode($content, associative: true);
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($manifest)) {
-            throw new RuntimeException("Manifest {$path} does not contain a valid JSON object.");
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($manifest) || (array_is_list($manifest) && $manifest !== [])) {
+            return "Manifest {$path} does not contain a valid JSON object.";
         }
 
         /** @var array<string, mixed> $manifest */

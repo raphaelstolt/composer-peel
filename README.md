@@ -170,6 +170,57 @@ When both `--format=json` and `--diff` are used, the resulting JSON object will 
 }
 ```
 
+## Validating the peeled manifest
+
+Use the `validate` command to verify a peeled `composer.json` before releasing it:
+
+```bash
+composer-peel validate
+```
+
+The following checks are performed:
+
+* `composer.json` contains a valid JSON object,
+* the backup file exists when backups are enabled,
+* the backup file contains a valid JSON object,
+* none of the configured sections is still present in `composer.json`,
+* the required runtime sections `name` and `require` still exist,
+* all other sections are unchanged compared to the backup,
+* `composer validate --no-check-lock` reports no errors for `composer.json` and the backup file.
+
+```text
+$ composer-peel validate
+
+[PASS] composer.json contains valid JSON
+[PASS] Backup .composer-unpeeled.json exists
+[PASS] Backup .composer-unpeeled.json contains valid JSON
+[PASS] Configured sections are absent
+[PASS] Required runtime sections exist
+[PASS] Runtime sections match the backup
+[PASS] composer validate reports no errors for composer.json
+[PASS] composer validate reports no errors for .composer-unpeeled.json
+
+Peeled composer.json validated successfully.
+```
+
+The command exits with a non-zero status code if any check fails, which makes it usable in CI. Checks depending on
+the backup are skipped when backups are disabled via the configuration.
+
+The `composer validate` checks require the `composer` binary to be available on the `PATH`. Warnings do not fail the
+validation, but errors, including publish errors like a missing `description`, do. The lock file is not checked,
+because it is expected to still contain the peeled development dependencies. To skip these checks, use the
+`--skip-composer-validate` option:
+
+```bash
+composer-peel validate --skip-composer-validate
+```
+
+A custom backup file or configuration file can be specified as well:
+
+```bash
+composer-peel validate --backup-file=my-backup.json --config=.composer-peel.php
+```
+
 ## Rolling back changes
 
 If a backup file was created during the `peel` process, you can restore `composer.json` to its original state using
@@ -308,6 +359,7 @@ Before running `release`, prepare the release manifest with the `peel` command:
 
 ```bash
 composer-peel peel
+composer-peel validate
 composer-peel release v1.0.0
 composer-peel rollback --commit
 ```
@@ -315,24 +367,16 @@ composer-peel rollback --commit
 The workflow is:
 
 1. Run `peel` to remove the configured development-only sections from `composer.json`.
-2. Run `release` to commit the peeled manifest and create the Git tag.
-3. Run `rollback --commit` to restore the original development `composer.json` and commit the changes.
+2. Optionally run `validate` to review the peeled manifest. `release` runs the same checks anyway.
+3. Run `release` to commit the peeled manifest and create the Git tag.
+4. Run `rollback --commit` to restore the original development `composer.json` and commit the changes.
 
 The `release` command requires a clean working tree. The only allowed changes are the peeled `composer.json` and the
 backup file created by `peel`.
 
-Before committing, the `release` command validates the peeled `composer.json` against the backup file created by `peel`.
-The release is aborted without creating a commit or tag if:
-
-* the backup file does not exist, i.e. `peel` has not been run,
-* `composer.json` or the backup file does not contain valid JSON,
-* a configured peel section is still present in `composer.json`,
-* any other section is missing, has been added, or differs from the backup.
-* `composer validate --no-check-lock` reports errors for the peeled `composer.json`.
-
-The `composer` binary therefore needs to be available on the `PATH`. Warnings reported by `composer validate` do not
-abort the release, but errors, including publish errors like a missing `description`, do. The lock file is not checked,
-because it is expected to still contain the peeled development dependencies.
+Before committing, the `release` command runs the same checks as the [`validate`](#validating-the-peeled-manifest)
+command. In addition, the backup file is always required, as `release` expects `peel` to have been run. If any check
+fails, the release is aborted without creating a commit or tag.
 
 The commit messages used for the release workflow can be configured through `.composer-peel.php`.
 
