@@ -119,8 +119,7 @@ class PeelCommandTest extends TestCase
         TestCommand::for(new PeelCommand())
             ->execute('v1.0.0')
             ->assertStatusCode(1)
-            ->assertOutputContains('ERROR: Working tree contains uncommitted changes.')
-            ->assertOutputContains('composer-peel release must start from a clean working tree.');
+            ->assertOutputContains('The composer-peel release workflow requires a clean working tree.');
     }
 
     public function testExecuteRelease(): void

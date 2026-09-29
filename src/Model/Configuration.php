@@ -65,7 +65,7 @@ final class Configuration
         foreach ($peelSections as $section) {
             if (in_array($section, self::PROTECTED_SECTIONS, true)) {
                 throw new \RuntimeException(sprintf(
-                    "ERROR: The configured section \"%s\" is protected.\n\ncomposer-peel only permits development-oriented sections by default.",
+                    'The configured section "%s" is protected and cannot be peeled.',
                     $section
                 ));
             }

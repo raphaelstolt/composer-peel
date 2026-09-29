@@ -65,7 +65,7 @@ PHP;
         file_put_contents($this->testDir . '/.composer-peel.php', $configContent);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage("ERROR: The configured section \"require\" is protected.\n\ncomposer-peel only permits development-oriented sections by default.");
+        $this->expectExceptionMessage('The configured section "require" is protected and cannot be peeled.');
 
         $loader = new ConfigurationLoader();
         $loader->load($this->testDir . '/.composer-peel.php');

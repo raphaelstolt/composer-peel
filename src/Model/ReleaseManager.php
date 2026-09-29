@@ -62,7 +62,7 @@ class ReleaseManager
     {
         exec('git status --porcelain', $output, $resultCode);
         if ($resultCode !== 0 || count($output) > 0) {
-            throw new RuntimeException("ERROR: Working tree contains uncommitted changes.\n\ncomposer-peel release must start from a clean working tree.");
+            throw new RuntimeException('The composer-peel release workflow requires a clean working tree.');
         }
     }
 

@@ -71,8 +71,13 @@ class PeelCommand extends Command
 
         if (file_exists((string) $configPath)) {
             $loader = new ConfigurationLoader();
-            $configuration = $loader->load((string) $configPath);
-            $configUsed = basename((string) $configPath);
+            try {
+                $configuration = $loader->load((string) $configPath);
+                $configUsed = basename((string) $configPath);
+            } catch (RuntimeException $e) {
+                $output->writeln("<error>" . $e->getMessage() . "</error>");
+                return Command::FAILURE;
+            }
         }
         
         if (!file_exists((string) $configPath) && is_string($configOption)) {
