@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+## [v1.3.2] - 2026-09-29
+
 ### Fixed
 - Widen `sebastian/diff` support.
 
@@ -40,7 +42,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Initial implementation.
 
 
-[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.2...HEAD
+[v1.3.2]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.1...v1.3.2
 [v1.3.1]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.0...v1.3.1
 [v1.3.0]: https://github.com/raphaelstolt/composer-peel/compare/v1.2.0...v1.3.0
 [v1.2.0]: https://github.com/raphaelstolt/composer-peel/compare/v1.1.0...v1.2.0
