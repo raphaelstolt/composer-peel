@@ -351,11 +351,11 @@ The automated release workflow uses configurable commit messages:
 
 `after_tag` is used by `rollback --commit` for the commit restoring the original development manifest.
 
-## Release workflow
+### Release workflow
 
-Use the `release` command to commit the already peeled `composer.json` and create a Git tag for the release.
+Use the `release` command to commit and tag an **already peeled** `composer.json`.
 
-Before running `release`, prepare the release manifest with the `peel` command:
+The `release` command does not peel and validate the manifest itself. Run `peel` and `validate` first:
 
 ```bash
 composer-peel peel
@@ -367,16 +367,12 @@ composer-peel rollback --commit
 The workflow is:
 
 1. Run `peel` to remove the configured development-only sections from `composer.json`.
-2. Optionally run `validate` to review the peeled manifest. `release` runs the same checks anyway.
+2. Optionally run `validate` to inspect the peeled manifest independently.
 3. Run `release` to commit the peeled manifest and create the Git tag.
 4. Run `rollback --commit` to restore the original development `composer.json` and commit the changes.
 
 The `release` command requires a clean working tree. The only allowed changes are the peeled `composer.json` and the
 backup file created by `peel`.
-
-Before committing, the `release` command runs the same checks as the [`validate`](#validating-the-peeled-manifest)
-command. In addition, the backup file is always required, as `release` expects `peel` to have been run. If any check
-fails, the release is aborted without creating a commit or tag.
 
 The commit messages used for the release workflow can be configured through `.composer-peel.php`.
 
