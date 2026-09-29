@@ -64,7 +64,13 @@ class ComposerPeeler
         $newManifestContent = (string) json_encode($manifest, $flags);
         $projectedSize = strlen($newManifestContent) + 1; // +1 for the newline appended on write
 
-        return new DryRunResult($removedSections, $originalSize, $projectedSize);
+        return new DryRunResult(
+            $removedSections, 
+            $originalSize, 
+            $projectedSize, 
+            $manifestContent, 
+            $newManifestContent . "\n"
+        );
     }
 
     private function readManifest(string $manifestPath): string

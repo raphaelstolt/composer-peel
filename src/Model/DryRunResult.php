@@ -13,6 +13,8 @@ final class DryRunResult
         private array $removedSections,
         private int $originalSize,
         private int $projectedSize,
+        private string $originalContent = '',
+        private string $projectedContent = '',
     ) {}
 
     /**
@@ -31,5 +33,15 @@ final class DryRunResult
     public function getProjectedSize(): int
     {
         return $this->projectedSize;
+    }
+
+    public function getOriginalContent(): string
+    {
+        return $this->originalContent;
+    }
+
+    public function getProjectedContent(): string
+    {
+        return $this->projectedContent;
     }
 }

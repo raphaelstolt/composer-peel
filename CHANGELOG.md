@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Guard against the usage of non-dev Composer sections.
 
 ### Added
-- New `--format` option for the `peel` command.
+- New `--format` and `--diff` option for the `peel` command.
 
 ## [v1.3.0] - 2026-09-28
 

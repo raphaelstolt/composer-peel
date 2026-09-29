@@ -138,11 +138,19 @@ Dry run completed. No files were modified.
 The values above are illustrative. The actual result depends on the contents of your `composer.json` and the configured
 peeling rules.
 
+If you also want to see the exact structural changes, you can use the `--diff` option:
+
+```bash
+composer-peel peel --dry-run --diff
+```
+
 If you need the dry-run output in a machine-readable format, you can use the `--format=json` option:
 
 ```bash
 composer-peel peel --dry-run --format=json
 ```
+
+When both `--format=json` and `--diff` are used, the resulting JSON object will contain an additional `diff` key with the unified diff string.
 
 ```json
 {

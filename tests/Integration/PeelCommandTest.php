@@ -85,6 +85,26 @@ class PeelCommandTest extends TestCase
         static::assertArrayHasKey('scripts-descriptions', $manifest);
     }
 
+    public function testExecuteDryRunDiff(): void
+    {
+        TestCommand::for(new PeelCommand())
+            ->execute('--dry-run --diff')
+            ->assertSuccessful()
+            ->assertOutputContains('Diff:')
+            ->assertOutputContains('--- Original')
+            ->assertOutputContains('+++ Peeled')
+            ->assertOutputContains('-    "require-dev": {')
+            ->assertOutputContains('Dry run completed. No files were modified.');
+    }
+
+    public function testExecuteDiffFailsWithoutDryRun(): void
+    {
+        TestCommand::for(new PeelCommand())
+            ->execute('--diff')
+            ->assertStatusCode(1)
+            ->assertOutputContains('The --diff option can only be used with --dry-run.');
+    }
+
     public function testExecute(): void
     {
         TestCommand::for(new PeelCommand())

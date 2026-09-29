@@ -25,6 +25,7 @@
     ],
     "require": {
         "php": ">=8.2",
+        "sebastian/diff": "^9.0",
         "symfony/console": "^7.4 || ^8.1"
     },
     "config": {

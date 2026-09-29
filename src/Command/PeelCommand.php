@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Stolt\ComposerPeel\Command;
 
 use RuntimeException;
+use SebastianBergmann\Diff\Differ;
+use SebastianBergmann\Diff\Output\StrictUnifiedDiffOutputBuilder;
 use Stolt\ComposerPeel\Model\ComposerPeeler;
 use Stolt\ComposerPeel\Model\Configuration;
 use Stolt\ComposerPeel\Model\ConfigurationLoader;
@@ -58,6 +60,13 @@ class PeelCommand extends Command
             "Output format for the dry run (text or json)",
             "text"
         );
+
+        $this->addOption(
+            "diff",
+            null,
+            InputOption::VALUE_NONE,
+            "Show the diff of the changes (only valid with --dry-run)"
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -93,6 +102,12 @@ class PeelCommand extends Command
 
         $dryRun = (bool) $input->getOption("dry-run");
         $tag = $input->getArgument("tag");
+        $showDiff = (bool) $input->getOption("diff");
+
+        if ($showDiff && !$dryRun) {
+            $output->writeln("<error>The --diff option can only be used with --dry-run.</error>");
+            return Command::FAILURE;
+        }
 
         if (is_string($tag)) {
             if ($dryRun) {
@@ -108,7 +123,7 @@ class PeelCommand extends Command
                 $output->writeln("<error>Invalid format specified. Allowed values are 'text' or 'json'.</error>");
                 return Command::FAILURE;
             }
-            return $this->printDryRunReport($configUsed, $format, $output);
+            return $this->printDryRunReport($configUsed, $format, $showDiff, $output);
         }
 
         return $this->handlePeelWorkflow($output);
@@ -142,7 +157,7 @@ class PeelCommand extends Command
         }
     }
 
-    private function printDryRunReport(string $configUsed, string $format, OutputInterface $output): int
+    private function printDryRunReport(string $configUsed, string $format, bool $showDiff, OutputInterface $output): int
     {
         $result = $this->composerPeeler->simulatePeel();
 
@@ -151,8 +166,18 @@ class PeelCommand extends Command
         $reduction = $originalSize - $projectedSize;
         $percentage = $originalSize > 0 ? ($reduction / $originalSize) * 100 : 0;
 
+        $diffString = null;
+        if ($showDiff) {
+            $builder = new StrictUnifiedDiffOutputBuilder([
+                'fromFile' => 'Original',
+                'toFile' => 'Peeled',
+            ]);
+            $differ = new Differ($builder);
+            $diffString = $differ->diff($result->getOriginalContent(), $result->getProjectedContent());
+        }
+
         if ($format === 'json') {
-            $output->writeln((string) json_encode([
+            $report = [
                 'manifest' => 'composer.json',
                 'configuration' => $configUsed,
                 'removed_sections' => $result->getRemovedSections(),
@@ -160,7 +185,13 @@ class PeelCommand extends Command
                 'projected_size_bytes' => $projectedSize,
                 'reduction_bytes' => $reduction,
                 'reduction_percentage' => round($percentage, 1),
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            ];
+            
+            if ($showDiff && is_string($diffString)) {
+                $report['diff'] = $diffString;
+            }
+
+            $output->writeln((string) json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             return Command::SUCCESS;
         }
 
@@ -183,6 +214,12 @@ class PeelCommand extends Command
         $output->writeln(sprintf("Projected size:      %s bytes", number_format($projectedSize)));
         $output->writeln(sprintf("Estimated reduction: %s bytes (%.1f%%)", number_format($reduction), $percentage));
         $output->writeln('');
+        
+        if ($showDiff && is_string($diffString)) {
+            $output->writeln("Diff:");
+            $output->writeln($diffString);
+        }
+
         $output->writeln("Dry run completed. No files were modified.");
         
         return Command::SUCCESS;
