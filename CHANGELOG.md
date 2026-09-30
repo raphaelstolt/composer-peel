@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+## [v2.1.0] - 2026-09-30
+
 ### Added
 - New `--commit-message` option for the `release` and `rollback` commands, overwriting the default or configured
   commit message. For the `rollback` command it requires the `--commit` option.
@@ -68,7 +70,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Initial implementation.
 
 
-[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v2.1.0...HEAD
+[v2.1.0]: https://github.com/raphaelstolt/composer-peel/compare/v2.0.0...v2.1.0
 [v2.0.0]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.2...v2.0.0
 [v1.3.2]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.1...v1.3.2
 [v1.3.1]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.0...v1.3.1
