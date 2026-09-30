@@ -19,6 +19,11 @@
     "bin": [
         "bin/composer-peel"
     ],
+    "autoload-dev": {
+        "psr-4": {
+            "Stolt\\ComposerPeel\\Tests\\": "tests/"
+        }
+    },
     "authors": [
         {
             "name": "Raphael Stolt",
@@ -37,5 +42,30 @@
         "allow-plugins": {
             "carthage-software/mago": true
         }
+    },
+    "require-dev": {
+        "carthage-software/mago": "^1.50",
+        "phpstan/phpstan": "^2.2",
+        "phpunit/phpunit": "^11.0 || ^12.0 || ^13.3",
+        "stolt/lean-package-validator": "^6.0",
+        "stolt/version-aligner": "^1.1",
+        "zenstruck/console-test": "^1.8"
+    },
+    "scripts": {
+        "test": "phpunit",
+        "cs-lint": [
+            "mago format --check",
+            "mago lint"
+        ],
+        "cs-fix": "mago format",
+        "validate-gitattributes": "./vendor/bin/lean-package-validator validate",
+        "validate-package": "composer validate --strict",
+        "version-check": "version-aligner check",
+        "pre-commit-check": [
+            "@validate-gitattributes",
+            "@version-check",
+            "@cs-lint",
+            "@test"
+        ]
     }
 }
