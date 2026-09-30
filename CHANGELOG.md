@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+### Added
+- New `--commit-message` option for the `release` and `rollback` commands, overwriting the default or configured
+  commit message. For the `rollback` command it requires the `--commit` option.
+
 ## [v2.0.0] - 2026-09-30
 
 ### Changed

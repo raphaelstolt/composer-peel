@@ -38,6 +38,13 @@ class RollbackCommand extends Command
         $this->addOption('commit', null, InputOption::VALUE_NONE, 'Commit the restored composer.json to Git');
 
         $this->addOption(
+            'commit-message',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'Commit message for the restored composer.json, overwriting the default or configured one',
+        );
+
+        $this->addOption(
             'force',
             null,
             InputOption::VALUE_NONE,
@@ -68,6 +75,21 @@ class RollbackCommand extends Command
         $backupFile = $input->getOption('backup-file');
         if (is_string($backupFile)) {
             $configuration->setBackupPath($backupFile);
+        }
+
+        $commitMessage = $input->getOption('commit-message');
+        if (is_string($commitMessage)) {
+            if (!$input->getOption('commit')) {
+                $output->writeln('<error>The --commit-message option requires the --commit option.</error>');
+                return Command::FAILURE;
+            }
+
+            if (trim($commitMessage) === '') {
+                $output->writeln('<error>The --commit-message option requires a non-empty message.</error>');
+                return Command::FAILURE;
+            }
+
+            $configuration->setAfterTagCommitMessage($commitMessage);
         }
 
         $backupPath = $configuration->getBackupPath();

@@ -33,6 +33,13 @@ class ReleaseCommand extends Command
         $this->addOption('backup-file', null, InputOption::VALUE_REQUIRED, 'Name of the composer.json backup file');
 
         $this->addOption('config', null, InputOption::VALUE_REQUIRED, 'Path to the configuration file');
+
+        $this->addOption(
+            'commit-message',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'Commit message for the peeled composer.json, overwriting the default or configured one',
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -55,6 +62,16 @@ class ReleaseCommand extends Command
         $backupFile = $input->getOption('backup-file');
         if (is_string($backupFile)) {
             $configuration->setBackupPath($backupFile);
+        }
+
+        $commitMessage = $input->getOption('commit-message');
+        if (is_string($commitMessage)) {
+            if (trim($commitMessage) === '') {
+                $output->writeln('<error>The --commit-message option requires a non-empty message.</error>');
+                return Command::FAILURE;
+            }
+
+            $configuration->setBeforeTagCommitMessage($commitMessage);
         }
 
         $tag = $input->getArgument('tag');

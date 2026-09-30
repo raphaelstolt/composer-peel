@@ -317,6 +317,56 @@ class RollbackCommandTest extends TestCase
         static::assertSame(['chore: back to development'], $logOutput);
     }
 
+    public function testExecuteRollbackCommitMessageOptionOverwritesConfiguredCommitMessage(): void
+    {
+        $this->initGitRepositoryWithPeeledManifest();
+
+        file_put_contents('custom-config.php', <<<'PHP'
+            <?php
+
+            return [
+                'git' => [
+                    'commit_messages' => [
+                        'after_tag' => 'chore: back to development',
+                    ],
+                ],
+            ];
+            PHP);
+
+        TestCommand::for(new RollbackCommand())->execute(
+            '--commit --config=custom-config.php --commit-message="chore: post release"',
+        )->assertSuccessful();
+
+        exec('git log -1 --pretty=%s', $logOutput);
+        static::assertSame(['chore: post release'], $logOutput);
+    }
+
+    public function testExecuteRollbackFailsForCommitMessageWithoutCommitOption(): void
+    {
+        $this->initGitRepositoryWithPeeledManifest();
+        $peeledManifest = (string) file_get_contents('composer.json');
+
+        TestCommand::for(new RollbackCommand())
+            ->execute('--commit-message="chore: post release"')
+            ->assertStatusCode(1)
+            ->assertOutputContains('The --commit-message option requires the --commit option.');
+
+        static::assertSame($peeledManifest, file_get_contents('composer.json'));
+        static::assertFileExists('.composer-unpeeled.json');
+    }
+
+    public function testExecuteRollbackFailsForEmptyCommitMessage(): void
+    {
+        $this->initGitRepositoryWithPeeledManifest();
+
+        TestCommand::for(new RollbackCommand())
+            ->execute('--commit --commit-message=""')
+            ->assertStatusCode(1)
+            ->assertOutputContains('The --commit-message option requires a non-empty message.');
+
+        static::assertFileExists('.composer-unpeeled.json');
+    }
+
     public function testExecuteRollbackFailsToCommitOutsideOfGitRepository(): void
     {
         $backupManifest = ['name' => 'test/package', 'require-dev' => ['phpunit/phpunit' => '^10.0']];

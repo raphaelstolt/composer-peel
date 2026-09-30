@@ -245,6 +245,13 @@ To commit the restored `composer.json` to Git right away, use the `--commit` opt
 composer-peel rollback --commit
 ```
 
+To overwrite the default or configured commit message, use the `--commit-message` option. It requires the `--commit`
+option:
+
+```bash
+composer-peel rollback --commit --commit-message="chore: start next development cycle"
+```
+
 The `--commit` option can be combined with `--keep-backup`. If the commit fails, e.g. because the current directory is
 not a Git repository, the command exits with an error and the backup file is kept.
 
@@ -362,6 +369,9 @@ The automated release workflow uses configurable commit messages:
 
 `after_tag` is used by `rollback --commit` for the commit restoring the original development manifest.
 
+Both messages can be overwritten per invocation via the `--commit-message` option of the `release` and
+`rollback --commit` commands.
+
 ### Release workflow
 
 Use the `release` command to commit and tag an **already peeled** `composer.json`.
@@ -391,7 +401,12 @@ configured sections. The release is aborted without creating a commit or tag if 
 `peel` again. For the full set of checks, including `composer validate`, use the
 [`validate`](#validating-the-peeled-manifest) command.
 
-The commit messages used for the release workflow can be configured through `.composer-peel.php`.
+The commit messages used for the release workflow can be configured through `.composer-peel.php`. To overwrite the
+default or configured commit message for a single release, use the `--commit-message` option:
+
+```bash
+composer-peel release v1.0.0 --commit-message="chore: release v1.0.0"
+```
 
 The resulting history looks like this:
 

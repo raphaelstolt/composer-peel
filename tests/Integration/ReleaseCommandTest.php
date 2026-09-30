@@ -172,6 +172,46 @@ class ReleaseCommandTest extends TestCase
         static::assertSame(['?? .composer-unpeeled.json'], $statusOutput);
     }
 
+    public function testExecuteReleaseWithCustomCommitMessage(): void
+    {
+        file_put_contents('custom-config.php', <<<'PHP'
+            <?php
+
+            return [
+                'git' => [
+                    'commit_messages' => [
+                        'before_tag' => 'chore: configured release message',
+                    ],
+                ],
+            ];
+            PHP);
+        exec('git add custom-config.php && git commit -m "Add configuration"');
+
+        TestCommand::for(new PeelCommand())->execute()->assertSuccessful();
+
+        TestCommand::for(new ReleaseCommand())->execute(
+            'v1.0.0 --config=custom-config.php --commit-message="chore: release v1.0.0"',
+        )->assertSuccessful();
+
+        exec('git log -1 --pretty=%s', $logOutput);
+        static::assertSame(['chore: release v1.0.0'], $logOutput);
+
+        exec('git tag --points-at HEAD', $tagOutput);
+        static::assertSame(['v1.0.0'], $tagOutput);
+    }
+
+    public function testExecuteReleaseFailsForEmptyCommitMessage(): void
+    {
+        TestCommand::for(new PeelCommand())->execute()->assertSuccessful();
+
+        TestCommand::for(new ReleaseCommand())
+            ->execute('v1.0.0 --commit-message=" "')
+            ->assertStatusCode(1)
+            ->assertOutputContains('The --commit-message option requires a non-empty message.');
+
+        $this->assertNoReleaseCreated();
+    }
+
     public function testExecuteReleaseWithCustomBackupFile(): void
     {
         TestCommand::for(new PeelCommand())->execute('--backup-file=custom-backup.json')->assertSuccessful();

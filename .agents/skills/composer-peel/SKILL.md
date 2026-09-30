@@ -114,6 +114,12 @@ vendor/bin/composer-peel rollback --commit
 
 Before committing, `release` verifies that the backup file exists and that `composer.json` is exactly the backup without the configured sections. It fails if `composer.json` has not been peeled or has been modified after peeling. It does not run the full `validate` checks (e.g., `composer validate`), so run `validate` before `release`. If a check fails, no commit or tag is created; fix the manifest via `rollback` and a fresh `peel` instead of editing it by hand.
 
+To overwrite the default or configured `before_tag` commit message for a single release:
+
+```bash
+vendor/bin/composer-peel release v1.0.0 --commit-message="chore: release v1.0.0"
+```
+
 Only use these commands when the user explicitly requests a release/tag operation.
 
 The tag must be a valid semantic version such as:
@@ -144,6 +150,12 @@ To commit the restored `composer.json` to Git using the configured `after_tag` c
 
 ```bash
 vendor/bin/composer-peel rollback --commit
+```
+
+To overwrite the default or configured commit message, add `--commit-message` (only valid together with `--commit`):
+
+```bash
+vendor/bin/composer-peel rollback --commit --commit-message="chore: start next development cycle"
 ```
 
 `--commit` can be combined with `--keep-backup`. If the commit fails (e.g., outside a Git repository), the command exits with an error and the backup file is kept, while `composer.json` has already been restored.
