@@ -123,7 +123,4 @@ class PeelCommandTest extends TestCase
 
         static::assertFileExists('.composer-unpeeled.json');
     }
-
-
-
 }

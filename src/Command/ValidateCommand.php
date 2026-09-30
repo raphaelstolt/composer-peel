@@ -16,8 +16,8 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    name: "validate",
-    description: "Validate the peeled composer.json against the configuration and the backup file",
+    name: 'validate',
+    description: 'Validate the peeled composer.json against the configuration and the backup file',
 )]
 class ValidateCommand extends Command
 {
@@ -31,22 +31,22 @@ class ValidateCommand extends Command
 
     protected function configure(): void
     {
-        $this->addOption("backup-file", null, InputOption::VALUE_REQUIRED, "Name of the composer.json backup file");
+        $this->addOption('backup-file', null, InputOption::VALUE_REQUIRED, 'Name of the composer.json backup file');
 
-        $this->addOption("config", null, InputOption::VALUE_REQUIRED, "Path to the configuration file");
+        $this->addOption('config', null, InputOption::VALUE_REQUIRED, 'Path to the configuration file');
 
         $this->addOption(
-            "skip-composer-validate",
+            'skip-composer-validate',
             null,
             InputOption::VALUE_NONE,
-            "Do not run composer validate on the manifests",
+            'Do not run composer validate on the manifests',
         );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $configOption = $input->getOption("config");
-        $configPath = is_string($configOption) ? $configOption : getcwd() . "/.composer-peel.php";
+        $configOption = $input->getOption('config');
+        $configPath = is_string($configOption) ? $configOption : getcwd() . '/.composer-peel.php';
 
         $configuration = new Configuration();
 
@@ -55,12 +55,12 @@ class ValidateCommand extends Command
             try {
                 $configuration = $loader->load((string) $configPath);
             } catch (RuntimeException $e) {
-                $output->writeln("<error>" . $e->getMessage() . "</error>");
+                $output->writeln('<error>' . $e->getMessage() . '</error>');
                 return Command::FAILURE;
             }
         }
 
-        $backupFile = $input->getOption("backup-file");
+        $backupFile = $input->getOption('backup-file');
         if (is_string($backupFile)) {
             $configuration->setBackupPath($backupFile);
         }
@@ -72,7 +72,7 @@ class ValidateCommand extends Command
         $result = $this->manifestValidator->check(
             'composer.json',
             $configuration->getBackupPath(),
-            !$input->getOption("skip-composer-validate"),
+            !$input->getOption('skip-composer-validate'),
         );
 
         foreach ($result->getChecks() as $check) {
@@ -92,11 +92,11 @@ class ValidateCommand extends Command
         $output->writeln('');
 
         if (!$result->isValid()) {
-            $output->writeln("<error>Validation of the peeled composer.json failed.</error>");
+            $output->writeln('<error>Validation of the peeled composer.json failed.</error>');
             return Command::FAILURE;
         }
 
-        $output->writeln("Peeled composer.json validated successfully.");
+        $output->writeln('Peeled composer.json validated successfully.');
 
         return Command::SUCCESS;
     }

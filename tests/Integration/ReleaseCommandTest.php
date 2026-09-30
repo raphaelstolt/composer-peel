@@ -77,9 +77,7 @@ class ReleaseCommandTest extends TestCase
 
     public function testExecuteReleaseFailsIfPeelBackupIsNotTheConfiguredBackup(): void
     {
-        TestCommand::for(new PeelCommand())
-            ->execute('--backup-file=custom-backup.json')
-            ->assertSuccessful();
+        TestCommand::for(new PeelCommand())->execute('--backup-file=custom-backup.json')->assertSuccessful();
 
         TestCommand::for(new ReleaseCommand())
             ->execute('v1.0.0')
@@ -103,10 +101,7 @@ class ReleaseCommandTest extends TestCase
             ->assertOutputContains('Release workflow completed successfully for tag: v1.0.0.');
 
         exec('git log --pretty=%s', $logOutput);
-        static::assertSame(
-            ['chore(dist): prepare Composer manifest for release', 'Initial commit'],
-            $logOutput,
-        );
+        static::assertSame(['chore(dist): prepare Composer manifest for release', 'Initial commit'], $logOutput);
 
         exec('git tag --points-at HEAD', $tagOutput);
         static::assertSame(['v1.0.0'], $tagOutput);
@@ -124,13 +119,9 @@ class ReleaseCommandTest extends TestCase
 
     public function testExecuteReleaseWithCustomBackupFile(): void
     {
-        TestCommand::for(new PeelCommand())
-            ->execute('--backup-file=custom-backup.json')
-            ->assertSuccessful();
+        TestCommand::for(new PeelCommand())->execute('--backup-file=custom-backup.json')->assertSuccessful();
 
-        TestCommand::for(new ReleaseCommand())
-            ->execute('v1.0.0 --backup-file=custom-backup.json')
-            ->assertSuccessful();
+        TestCommand::for(new ReleaseCommand())->execute('v1.0.0 --backup-file=custom-backup.json')->assertSuccessful();
 
         exec('git tag --points-at HEAD', $tagOutput);
         static::assertSame(['v1.0.0'], $tagOutput);

@@ -38,7 +38,7 @@ class ManifestValidator
         if (!$result->isValid()) {
             throw new RuntimeException(
                 'The peeled composer.json is invalid:' . PHP_EOL . '  - '
-                . implode(PHP_EOL . '  - ', $result->getViolations()),
+                    . implode(PHP_EOL . '  - ', $result->getViolations()),
             );
         }
     }
@@ -89,10 +89,9 @@ class ManifestValidator
     {
         if (!file_exists($backupPath)) {
             if ($this->configuration->isBackupEnabled()) {
-                $result->add(ValidationCheck::failed(
-                    "Backup {$backupPath} exists",
-                    ["Backup file {$backupPath} does not exist."],
-                ));
+                $result->add(ValidationCheck::failed("Backup {$backupPath} exists", [
+                    "Backup file {$backupPath} does not exist.",
+                ]));
             } else {
                 $result->add(ValidationCheck::skipped("Backup {$backupPath} exists", 'Backup is disabled.'));
             }
@@ -214,10 +213,9 @@ class ManifestValidator
         exec($escapedCommand . ' 2>&1', $output, $resultCode);
 
         if ($resultCode !== 0) {
-            return ValidationCheck::failed(
-                $description,
-                ["composer validate failed for {$path}:" . PHP_EOL . implode(PHP_EOL, $output)],
-            );
+            return ValidationCheck::failed($description, [
+                "composer validate failed for {$path}:" . PHP_EOL . implode(PHP_EOL, $output),
+            ]);
         }
 
         return ValidationCheck::passed($description);
@@ -238,7 +236,11 @@ class ManifestValidator
         }
 
         $manifest = json_decode($content, associative: true);
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($manifest) || (array_is_list($manifest) && $manifest !== [])) {
+        if (
+            json_last_error() !== JSON_ERROR_NONE
+            || !is_array($manifest)
+            || array_is_list($manifest) && $manifest !== []
+        ) {
             return "Manifest {$path} does not contain a valid JSON object.";
         }
 

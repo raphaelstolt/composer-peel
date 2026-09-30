@@ -161,9 +161,7 @@ class RollbackCommandTest extends TestCase
             ];
             PHP);
 
-        TestCommand::for(new RollbackCommand())
-            ->execute('--commit --config=custom-config.php')
-            ->assertSuccessful();
+        TestCommand::for(new RollbackCommand())->execute('--commit --config=custom-config.php')->assertSuccessful();
 
         exec('git log -1 --pretty=%s', $logOutput);
         static::assertSame(['chore: back to development'], $logOutput);

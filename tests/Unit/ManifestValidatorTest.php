@@ -114,10 +114,10 @@ class ManifestValidatorTest extends TestCase
 
     public function testCheckFailsIfPeelSectionIsStillPresent(): void
     {
-        $this->writeManifests(
-            [...$this->peeledManifest, 'require-dev' => ['phpunit/phpunit' => '^10.0']],
-            $this->backupManifest,
-        );
+        $this->writeManifests([
+            ...$this->peeledManifest,
+            'require-dev' => ['phpunit/phpunit' => '^10.0'],
+        ], $this->backupManifest);
 
         $this->assertViolations(["Section 'require-dev' has not been peeled."]);
     }
@@ -155,30 +155,26 @@ class ManifestValidatorTest extends TestCase
 
     public function testCheckFailsIfRuntimeSectionDiffersFromBackup(): void
     {
-        $this->writeManifests(
-            [...$this->peeledManifest, 'require' => ['php' => '>=8.3']],
-            $this->backupManifest,
-        );
+        $this->writeManifests([...$this->peeledManifest, 'require' => ['php' => '>=8.3']], $this->backupManifest);
 
         $this->assertViolations(["Section 'require' differs from the backup."]);
     }
 
     public function testCheckFailsIfSectionIsNotPresentInBackup(): void
     {
-        $this->writeManifests(
-            [...$this->peeledManifest, 'homepage' => 'https://example.com'],
-            $this->backupManifest,
-        );
+        $this->writeManifests([...$this->peeledManifest, 'homepage' => 'https://example.com'], $this->backupManifest);
 
         $this->assertViolations(["Section 'homepage' is not present in the backup."]);
     }
 
     public function testCheckReportsAllViolations(): void
     {
-        $this->writeManifests(
-            ['name' => 'test/package', 'description' => 'A test package', 'license' => 'MIT', 'scripts' => ['test' => 'phpunit']],
-            $this->backupManifest,
-        );
+        $this->writeManifests([
+            'name' => 'test/package',
+            'description' => 'A test package',
+            'license' => 'MIT',
+            'scripts' => ['test' => 'phpunit'],
+        ], $this->backupManifest);
 
         $this->assertViolations([
             "Section 'scripts' has not been peeled.",
@@ -203,7 +199,10 @@ class ManifestValidatorTest extends TestCase
 
         static::assertFalse($result->isValid());
         static::assertSame(['Backup file .composer-unpeeled.json does not exist.'], $result->getViolations());
-        static::assertSame(ValidationCheck::SKIPPED, $this->findCheck($result, 'Runtime sections match the backup')->getStatus());
+        static::assertSame(
+            ValidationCheck::SKIPPED,
+            $this->findCheck($result, 'Runtime sections match the backup')->getStatus(),
+        );
     }
 
     public function testCheckSkipsBackupChecksIfBackupIsDisabled(): void
@@ -224,7 +223,10 @@ class ManifestValidatorTest extends TestCase
             ValidationCheck::SKIPPED,
             $this->findCheck($result, 'Backup .composer-unpeeled.json exists')->getStatus(),
         );
-        static::assertSame(ValidationCheck::SKIPPED, $this->findCheck($result, 'Runtime sections match the backup')->getStatus());
+        static::assertSame(
+            ValidationCheck::SKIPPED,
+            $this->findCheck($result, 'Runtime sections match the backup')->getStatus(),
+        );
     }
 
     public function testCheckFailsIfBackupIsInvalidJson(): void
@@ -240,10 +242,7 @@ class ManifestValidatorTest extends TestCase
         $configuration = new Configuration();
         $configuration->setPeelSections(['require-dev']);
 
-        $this->writeManifests(
-            [...$this->peeledManifest, 'scripts' => ['test' => 'phpunit']],
-            $this->backupManifest,
-        );
+        $this->writeManifests([...$this->peeledManifest, 'scripts' => ['test' => 'phpunit']], $this->backupManifest);
 
         $result = (new ManifestValidator($configuration))->check(
             'composer.json',
@@ -256,10 +255,11 @@ class ManifestValidatorTest extends TestCase
 
     public function testValidateReportsAllViolations(): void
     {
-        $this->writeManifests(
-            [...$this->peeledManifest, 'require-dev' => ['phpunit/phpunit' => '^10.0'], 'require' => ['php' => '>=8.3']],
-            $this->backupManifest,
-        );
+        $this->writeManifests([
+            ...$this->peeledManifest,
+            'require-dev' => ['phpunit/phpunit' => '^10.0'],
+            'require' => ['php' => '>=8.3'],
+        ], $this->backupManifest);
 
         try {
             $this->validator->validate('composer.json', '.composer-unpeeled.json');

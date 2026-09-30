@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-
 return [
     'peel' => [
         'sections' => ['require-dev', 'scripts'],
@@ -20,4 +19,3 @@ return [
         ],
     ],
 ];
-

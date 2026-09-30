@@ -65,11 +65,11 @@ class ComposerPeeler
         $projectedSize = strlen($newManifestContent) + 1; // +1 for the newline appended on write
 
         return new DryRunResult(
-            $removedSections, 
-            $originalSize, 
-            $projectedSize, 
-            $manifestContent, 
-            $newManifestContent . "\n"
+            $removedSections,
+            $originalSize,
+            $projectedSize,
+            $manifestContent,
+            $newManifestContent . "\n",
         );
     }
 

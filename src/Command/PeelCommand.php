@@ -17,8 +17,8 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    name: "peel",
-    description: "Strip development-only metadata from the composer.json when preparing a PHP package for distribution",
+    name: 'peel',
+    description: 'Strip development-only metadata from the composer.json when preparing a PHP package for distribution',
 )]
 class PeelCommand extends Command
 {
@@ -32,38 +32,38 @@ class PeelCommand extends Command
 
     protected function configure(): void
     {
-        $this->addOption("backup-file", null, InputOption::VALUE_REQUIRED, "Name of the composer.json backup file");
+        $this->addOption('backup-file', null, InputOption::VALUE_REQUIRED, 'Name of the composer.json backup file');
 
-        $this->addOption("config", null, InputOption::VALUE_REQUIRED, "Path to the configuration file");
+        $this->addOption('config', null, InputOption::VALUE_REQUIRED, 'Path to the configuration file');
 
         $this->addOption(
-            "dry-run",
+            'dry-run',
             null,
             InputOption::VALUE_NONE,
-            "Simulate the metadata peeling without modifying composer.json",
+            'Simulate the metadata peeling without modifying composer.json',
         );
 
         $this->addOption(
-            "format",
+            'format',
             null,
             InputOption::VALUE_REQUIRED,
-            "Output format for the dry run (text or json)",
-            "text"
+            'Output format for the dry run (text or json)',
+            'text',
         );
 
         $this->addOption(
-            "diff",
+            'diff',
             null,
             InputOption::VALUE_NONE,
-            "Show the diff of the changes (only valid with --dry-run)"
+            'Show the diff of the changes (only valid with --dry-run)',
         );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $configOption = $input->getOption("config");
-        $configPath = is_string($configOption) ? $configOption : getcwd() . "/.composer-peel.php";
-        
+        $configOption = $input->getOption('config');
+        $configPath = is_string($configOption) ? $configOption : getcwd() . '/.composer-peel.php';
+
         $configUsed = 'internal defaults';
 
         $configuration = new Configuration();
@@ -74,27 +74,27 @@ class PeelCommand extends Command
                 $configuration = $loader->load((string) $configPath);
                 $configUsed = basename((string) $configPath);
             } catch (RuntimeException $e) {
-                $output->writeln("<error>" . $e->getMessage() . "</error>");
+                $output->writeln('<error>' . $e->getMessage() . '</error>');
                 return Command::FAILURE;
             }
         }
-        
+
         if (!file_exists((string) $configPath) && is_string($configOption)) {
             $configUsed = basename($configOption);
         }
 
-        $backupFile = $input->getOption("backup-file");
+        $backupFile = $input->getOption('backup-file');
         if (is_string($backupFile)) {
             $configuration->setBackupPath($backupFile);
         }
 
         $this->composerPeeler->setConfiguration($configuration);
 
-        $dryRun = (bool) $input->getOption("dry-run");
-        $showDiff = (bool) $input->getOption("diff");
+        $dryRun = (bool) $input->getOption('dry-run');
+        $showDiff = (bool) $input->getOption('diff');
 
         if ($showDiff && !$dryRun) {
-            $output->writeln("<error>The --diff option can only be used with --dry-run.</error>");
+            $output->writeln('<error>The --diff option can only be used with --dry-run.</error>');
             return Command::FAILURE;
         }
 
@@ -114,10 +114,10 @@ class PeelCommand extends Command
     {
         try {
             $this->composerPeeler->peel();
-            $output->writeln("Metadata peeled successfully.");
+            $output->writeln('Metadata peeled successfully.');
             return Command::SUCCESS;
         } catch (RuntimeException $e) {
-            $output->writeln("<error>" . $e->getMessage() . "</error>");
+            $output->writeln('<error>' . $e->getMessage() . '</error>');
             return Command::FAILURE;
         }
     }
@@ -151,7 +151,7 @@ class PeelCommand extends Command
                 'reduction_bytes' => $reduction,
                 'reduction_percentage' => round($percentage, 1),
             ];
-            
+
             if ($showDiff && is_string($diffString)) {
                 $report['diff'] = $diffString;
             }
@@ -161,32 +161,32 @@ class PeelCommand extends Command
         }
 
         $output->writeln('');
-        $output->writeln("Manifest:      composer.json");
+        $output->writeln('Manifest:      composer.json');
         $output->writeln("Configuration: {$configUsed}");
         $output->writeln('');
 
         $removed = $result->getRemovedSections();
         if (count($removed) > 0) {
-            $output->writeln("Sections to be removed:");
+            $output->writeln('Sections to be removed:');
             foreach ($removed as $section) {
                 $output->writeln("  - {$section}");
             }
         }
 
         $output->writeln('');
-        
-        $output->writeln(sprintf("Original size:       %s bytes", number_format($originalSize)));
-        $output->writeln(sprintf("Projected size:      %s bytes", number_format($projectedSize)));
-        $output->writeln(sprintf("Estimated reduction: %s bytes (%.1f%%)", number_format($reduction), $percentage));
+
+        $output->writeln(sprintf('Original size:       %s bytes', number_format($originalSize)));
+        $output->writeln(sprintf('Projected size:      %s bytes', number_format($projectedSize)));
+        $output->writeln(sprintf('Estimated reduction: %s bytes (%.1f%%)', number_format($reduction), $percentage));
         $output->writeln('');
-        
+
         if ($showDiff && is_string($diffString)) {
-            $output->writeln("Diff:");
+            $output->writeln('Diff:');
             $output->writeln($diffString);
         }
 
-        $output->writeln("Dry run completed. No files were modified.");
-        
+        $output->writeln('Dry run completed. No files were modified.');
+
         return Command::SUCCESS;
     }
 }

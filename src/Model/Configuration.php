@@ -66,7 +66,7 @@ final class Configuration
             if (in_array($section, self::PROTECTED_SECTIONS, true)) {
                 throw new \RuntimeException(sprintf(
                     'The configured section "%s" is protected and cannot be peeled.',
-                    $section
+                    $section,
                 ));
             }
         }

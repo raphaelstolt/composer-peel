@@ -52,16 +52,16 @@ class ConfigurationLoaderTest extends TestCase
     public function testLoadConfigWithProtectedSectionThrowsException(): void
     {
         $configContent = <<<PHP
-<?php
-return [
-    'peel' => [
-        'sections' => [
-            'require',
-            'autoload-dev',
-        ],
-    ],
-];
-PHP;
+            <?php
+            return [
+                'peel' => [
+                    'sections' => [
+                        'require',
+                        'autoload-dev',
+                    ],
+                ],
+            ];
+            PHP;
         file_put_contents($this->testDir . '/.composer-peel.php', $configContent);
 
         $this->expectException(RuntimeException::class);

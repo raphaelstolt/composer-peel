@@ -34,12 +34,7 @@ class RollbackCommand extends Command
             'Do not delete the backup file after restoration',
         );
 
-        $this->addOption(
-            'commit',
-            null,
-            InputOption::VALUE_NONE,
-            'Commit the restored composer.json to Git',
-        );
+        $this->addOption('commit', null, InputOption::VALUE_NONE, 'Commit the restored composer.json to Git');
 
         $this->addOption('backup-file', null, InputOption::VALUE_REQUIRED, 'Name of the composer.json backup file');
         $this->addOption('config', null, InputOption::VALUE_REQUIRED, 'Path to the configuration file');
