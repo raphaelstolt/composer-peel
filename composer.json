@@ -1,7 +1,14 @@
 {
     "name": "stolt/composer-peel",
     "description": "A small development tool to strip development-only metadata from composer.json when preparing PHP packages for distribution.",
-    "keywords": ["composer.json", "release management", "reduce", "runtime-only metadata", "strip development-only metadata", "dev"],
+    "keywords": [
+        "composer.json",
+        "release management",
+        "reduce",
+        "runtime-only metadata",
+        "strip development-only metadata",
+        "dev"
+    ],
     "type": "library",
     "license": "MIT",
     "autoload": {
