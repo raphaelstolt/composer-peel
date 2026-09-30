@@ -11,7 +11,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(name: 'init', description: 'Initializes the internal configuration by writing it to .composer-peel.php')]
+#[AsCommand(name: 'init', description: 'Initialise the internal configuration by writing it to .composer-peel.php')]
 class InitCommand extends Command
 {
     protected function configure(): void

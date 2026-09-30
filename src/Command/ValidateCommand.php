@@ -17,7 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     name: "validate",
-    description: "Validates the peeled Composer manifest against the configuration and the backup file",
+    description: "Validate the peeled composer.json against the configuration and the backup file",
 )]
 class ValidateCommand extends Command
 {

@@ -14,7 +14,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(name: 'rollback', description: 'Restores the composer.json manifest from a backup file')]
+#[AsCommand(name: 'rollback', description: 'Restore the composer.json manifest from a backup file')]
 class RollbackCommand extends Command
 {
     private ?ReleaseManager $releaseManager;

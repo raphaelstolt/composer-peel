@@ -17,7 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     name: "release",
-    description: "Executes the complete Git release workflow with a peeled manifest",
+    description: "Execute the complete Git release workflow with a peeled composer.json",
 )]
 class ReleaseCommand extends Command
 {

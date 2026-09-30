@@ -18,7 +18,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     name: "peel",
-    description: "Strips development-only metadata from the Composer manifest when preparing a PHP package for distribution",
+    description: "Strip development-only metadata from the composer.json when preparing a PHP package for distribution",
 )]
 class PeelCommand extends Command
 {
