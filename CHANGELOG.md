@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+## [v2.0.0] - 2026-09-30
+
 ### Changed
 - The release workflow is broken into individual commands: `peel`, `release`, and `rollback --commit`.
 - The `release` command no longer peels and restores `composer.json`. It commits and tags an already peeled manifest
@@ -62,7 +64,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Initial implementation.
 
 
-[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.2...HEAD
+[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v2.0.0...HEAD
+[v2.0.0]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.2...v2.0.0
 [v1.3.2]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.1...v1.3.2
 [v1.3.1]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.0...v1.3.1
 [v1.3.0]: https://github.com/raphaelstolt/composer-peel/compare/v1.2.0...v1.3.0
