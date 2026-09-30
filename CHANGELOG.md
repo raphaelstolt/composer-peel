@@ -8,12 +8,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ## [Unreleased]
 
 ### Changed
-- The release workflow is broken into individual commands.
+- The release workflow is broken into individual commands: `peel`, `release`, and `rollback --commit`.
+- The `release` command no longer peels and restores `composer.json`. It commits and tags an already peeled manifest
+  and aborts if `composer.json` is not exactly the peeled version of the backup file.
+- The `rollback` command refuses to overwrite a `composer.json` modified since it was peeled.
+- The `rollback` command leaves `composer.json` untouched if it already matches the backup file.
 
 ### Added
 - New dedicated `release` command.
-- New `validate` command verifying the peeled `composer.json`.
+- New `validate` command verifying the peeled `composer.json`, including `composer validate`.
 - New `--commit` option for the `rollback` command.
+- New `--force` option for the `rollback` command to restore a modified `composer.json`.
+
+### Removed
+- The `tag` argument of the `peel` command. Use `peel`, `release <tag>`, and `rollback --commit` instead.
+
+### Fixed
+- The `rollback` command reports invalid configuration files instead of failing with an uncaught exception.
+- The `rollback` command rejects backup files not containing a JSON object instead of failing with a type error.
 
 ## [v1.3.2] - 2026-09-29
 

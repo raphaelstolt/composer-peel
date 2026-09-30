@@ -366,7 +366,7 @@ The automated release workflow uses configurable commit messages:
 
 Use the `release` command to commit and tag an **already peeled** `composer.json`.
 
-The `release` command does not peel and validate the manifest itself. Run `peel` and `validate` first:
+The `release` command does not peel the manifest itself. Run `peel`, and optionally `validate`, first:
 
 ```bash
 composer-peel peel
@@ -384,6 +384,12 @@ The workflow is:
 
 The `release` command requires a clean working tree. The only allowed changes are the peeled `composer.json` and the
 backup file created by `peel`.
+
+Before committing, the `release` command also verifies that `composer.json` is exactly the backup file without the
+configured sections. The release is aborted without creating a commit or tag if the backup file is missing, if
+`composer.json` has not been peeled, or if it has been modified after peeling. In the latter case, run `rollback` and
+`peel` again. For the full set of checks, including `composer validate`, use the
+[`validate`](#validating-the-peeled-manifest) command.
 
 The commit messages used for the release workflow can be configured through `.composer-peel.php`.
 
