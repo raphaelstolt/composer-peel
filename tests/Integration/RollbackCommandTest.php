@@ -77,10 +77,11 @@ class RollbackCommandTest extends TestCase
 
     public function testExecuteRollbackKeepsBackupWhenOptionProvided(): void
     {
-        $backupManifest = ['name' => 'test/package'];
+        $backupManifest = ['name' => 'test/package', 'require-dev' => ['phpunit/phpunit' => '^10.0']];
+        $peeledManifest = ['name' => 'test/package'];
 
         file_put_contents('.composer-unpeeled.json', (string) json_encode($backupManifest));
-        file_put_contents('composer.json', (string) json_encode($backupManifest));
+        file_put_contents('composer.json', (string) json_encode($peeledManifest));
 
         TestCommand::for(new RollbackCommand())
             ->execute('--keep-backup')
@@ -94,14 +95,160 @@ class RollbackCommandTest extends TestCase
 
     public function testExecuteRollbackWithCustomBackupFile(): void
     {
-        $backupManifest = ['name' => 'test/package'];
+        $backupManifest = ['name' => 'test/package', 'require-dev' => ['phpunit/phpunit' => '^10.0']];
+        $peeledManifest = ['name' => 'test/package'];
 
         file_put_contents('custom-backup.json', (string) json_encode($backupManifest));
-        file_put_contents('composer.json', (string) json_encode($backupManifest));
+        file_put_contents('composer.json', (string) json_encode($peeledManifest));
 
-        TestCommand::for(new RollbackCommand())->execute('--backup-file=custom-backup.json')->assertSuccessful();
+        TestCommand::for(new RollbackCommand())
+            ->execute('--backup-file=custom-backup.json')
+            ->assertSuccessful()
+            ->assertOutputContains('Restoring composer.json from custom-backup.json');
 
+        static::assertSame((string) json_encode($backupManifest), file_get_contents('composer.json'));
         static::assertFileDoesNotExist('custom-backup.json');
+    }
+
+    public function testExecuteRollbackSkipsRestorationIfManifestAlreadyMatchesBackup(): void
+    {
+        $backupManifest = ['name' => 'test/package', 'require-dev' => ['phpunit/phpunit' => '^10.0']];
+
+        file_put_contents('.composer-unpeeled.json', (string) json_encode($backupManifest));
+        file_put_contents('composer.json', (string) json_encode($backupManifest, JSON_PRETTY_PRINT));
+
+        TestCommand::for(new RollbackCommand())
+            ->execute()
+            ->assertSuccessful()
+            ->assertOutputContains('composer.json already matches .composer-unpeeled.json.')
+            ->assertOutputNotContains('Restoring composer.json')
+            ->assertOutputContains('Backup removed successfully.');
+
+        static::assertSame((string) json_encode($backupManifest, JSON_PRETTY_PRINT), file_get_contents('composer.json'));
+        static::assertFileDoesNotExist('.composer-unpeeled.json');
+    }
+
+    public function testExecuteRollbackFailsIfManifestWasModifiedSincePeeling(): void
+    {
+        $backupManifest = [
+            'name' => 'test/package',
+            'require' => ['php' => '>=8.2'],
+            'require-dev' => ['phpunit/phpunit' => '^10.0'],
+        ];
+        $modifiedManifest = ['name' => 'test/package', 'require' => ['php' => '>=8.3']];
+
+        file_put_contents('.composer-unpeeled.json', (string) json_encode($backupManifest));
+        file_put_contents('composer.json', (string) json_encode($modifiedManifest));
+
+        TestCommand::for(new RollbackCommand())
+            ->execute()
+            ->assertStatusCode(1)
+            ->assertOutputContains('composer.json has been modified since it was peeled.')
+            ->assertOutputContains('Use --force to restore it anyway.');
+
+        static::assertSame((string) json_encode($modifiedManifest), file_get_contents('composer.json'));
+        static::assertFileExists('.composer-unpeeled.json');
+    }
+
+    public function testExecuteRollbackFailsIfManifestIsInvalidJson(): void
+    {
+        file_put_contents('.composer-unpeeled.json', (string) json_encode(['name' => 'test/package']));
+        file_put_contents('composer.json', 'invalid json');
+
+        TestCommand::for(new RollbackCommand())
+            ->execute()
+            ->assertStatusCode(1)
+            ->assertOutputContains('composer.json has been modified since it was peeled.');
+
+        static::assertSame('invalid json', file_get_contents('composer.json'));
+    }
+
+    public function testExecuteRollbackRestoresModifiedManifestWhenForced(): void
+    {
+        $backupManifest = ['name' => 'test/package', 'require-dev' => ['phpunit/phpunit' => '^10.0']];
+
+        file_put_contents('.composer-unpeeled.json', (string) json_encode($backupManifest));
+        file_put_contents('composer.json', (string) json_encode(['name' => 'test/modified-package']));
+
+        TestCommand::for(new RollbackCommand())
+            ->execute('--force')
+            ->assertSuccessful()
+            ->assertOutputContains('composer.json restored successfully.');
+
+        static::assertSame((string) json_encode($backupManifest), file_get_contents('composer.json'));
+    }
+
+    public function testExecuteRollbackRestoresMissingManifest(): void
+    {
+        $backupManifest = ['name' => 'test/package'];
+
+        file_put_contents('.composer-unpeeled.json', (string) json_encode($backupManifest));
+
+        TestCommand::for(new RollbackCommand())
+            ->execute()
+            ->assertSuccessful()
+            ->assertOutputContains('composer.json restored successfully.');
+
+        static::assertSame((string) json_encode($backupManifest), file_get_contents('composer.json'));
+    }
+
+    public function testExecuteRollbackFailsIfBackupIsNotAJsonObject(): void
+    {
+        file_put_contents('.composer-unpeeled.json', '123');
+        file_put_contents('composer.json', (string) json_encode(['name' => 'test/package']));
+
+        TestCommand::for(new RollbackCommand())
+            ->execute()
+            ->assertStatusCode(1)
+            ->assertOutputContains('Backup file .composer-unpeeled.json does not contain valid JSON.');
+    }
+
+    public function testExecuteRollbackUsesConfiguredPeelSections(): void
+    {
+        $backupManifest = [
+            'name' => 'test/package',
+            'require-dev' => ['phpunit/phpunit' => '^10.0'],
+            'scripts' => ['test' => 'phpunit'],
+        ];
+
+        file_put_contents('.composer-peel.php', <<<'PHP'
+            <?php
+
+            return [
+                'peel' => [
+                    'sections' => ['require-dev'],
+                ],
+            ];
+            PHP);
+        file_put_contents('.composer-unpeeled.json', (string) json_encode($backupManifest));
+        file_put_contents(
+            'composer.json',
+            (string) json_encode(['name' => 'test/package', 'scripts' => ['test' => 'phpunit']]),
+        );
+
+        TestCommand::for(new RollbackCommand())
+            ->execute()
+            ->assertSuccessful()
+            ->assertOutputContains('composer.json restored successfully.');
+    }
+
+    public function testExecuteRollbackFailsForInvalidConfiguration(): void
+    {
+        file_put_contents('.composer-peel.php', <<<'PHP'
+            <?php
+
+            return [
+                'peel' => [
+                    'sections' => ['require'],
+                ],
+            ];
+            PHP);
+        file_put_contents('.composer-unpeeled.json', (string) json_encode(['name' => 'test/package']));
+
+        TestCommand::for(new RollbackCommand())
+            ->execute()
+            ->assertStatusCode(1)
+            ->assertOutputContains('The configured section "require" is protected and cannot be peeled.');
     }
 
     public function testExecuteRollbackCommitsRestoredManifestWhenOptionProvided(): void

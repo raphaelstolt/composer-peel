@@ -7,6 +7,7 @@ namespace Stolt\ComposerPeel\Command;
 use RuntimeException;
 use Stolt\ComposerPeel\Model\Configuration;
 use Stolt\ComposerPeel\Model\ConfigurationLoader;
+use Stolt\ComposerPeel\Model\ManifestComparator;
 use Stolt\ComposerPeel\Model\ReleaseManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -36,6 +37,13 @@ class RollbackCommand extends Command
 
         $this->addOption('commit', null, InputOption::VALUE_NONE, 'Commit the restored composer.json to Git');
 
+        $this->addOption(
+            'force',
+            null,
+            InputOption::VALUE_NONE,
+            'Restore the backup even if composer.json has been modified since it was peeled',
+        );
+
         $this->addOption('backup-file', null, InputOption::VALUE_REQUIRED, 'Name of the composer.json backup file');
         $this->addOption('config', null, InputOption::VALUE_REQUIRED, 'Path to the configuration file');
     }
@@ -49,7 +57,12 @@ class RollbackCommand extends Command
 
         if (file_exists((string) $configPath)) {
             $loader = new ConfigurationLoader();
-            $configuration = $loader->load((string) $configPath);
+            try {
+                $configuration = $loader->load((string) $configPath);
+            } catch (RuntimeException $e) {
+                $output->writeln('<error>' . $e->getMessage() . '</error>');
+                return Command::FAILURE;
+            }
         }
 
         $backupFile = $input->getOption('backup-file');
@@ -70,41 +83,35 @@ class RollbackCommand extends Command
             return Command::FAILURE;
         }
 
-        $backupManifest = json_decode($backupContent, associative: true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
+        $backupManifest = $this->decodeManifest($backupContent);
+        if ($backupManifest === null) {
             $output->writeln("<error>Backup file {$backupPath} does not contain valid JSON.</error>");
             return Command::FAILURE;
         }
 
         $manifestPath = getcwd() . '/composer.json';
-        if (file_exists($manifestPath)) {
-            $currentManifest = json_decode((string) file_get_contents($manifestPath), associative: true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                $peelSections = $configuration->getPeelSections();
-                $isPeeled = false;
-                foreach ($peelSections as $section) {
-                    if (!array_key_exists($section, $backupManifest) || array_key_exists($section, $currentManifest)) {
-                        continue;
-                    }
+        $manifestState = $this->determineManifestState($manifestPath, $backupManifest, $configuration);
 
-                    $isPeeled = true;
-                    break;
-                }
-
-                if ($isPeeled) {
-                    // Verification successful
-                }
-            }
-        }
-
-        $output->writeln('Restoring composer.json from ' . basename($backupPath));
-
-        if (file_put_contents($manifestPath, $backupContent) === false) {
-            $output->writeln("<error>Failed to restore {$manifestPath} from backup.</error>");
+        if ($manifestState === ManifestComparator::MODIFIED && !$input->getOption('force')) {
+            $output->writeln(
+                '<error>composer.json has been modified since it was peeled. Restoring the backup would discard '
+                . 'these changes. Use --force to restore it anyway.</error>',
+            );
             return Command::FAILURE;
         }
 
-        $output->writeln('composer.json restored successfully.');
+        if ($manifestState === ManifestComparator::RESTORED) {
+            $output->writeln('composer.json already matches ' . basename($backupPath) . '.');
+        } else {
+            $output->writeln('Restoring composer.json from ' . basename($backupPath));
+
+            if (file_put_contents($manifestPath, $backupContent) === false) {
+                $output->writeln("<error>Failed to restore {$manifestPath} from backup.</error>");
+                return Command::FAILURE;
+            }
+
+            $output->writeln('composer.json restored successfully.');
+        }
 
         if ($input->getOption('commit')) {
             if ($this->releaseManager === null) {
@@ -131,5 +138,39 @@ class RollbackCommand extends Command
         $output->writeln('Backup kept.');
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * @param array<string, mixed> $backupManifest
+     */
+    private function determineManifestState(
+        string $manifestPath,
+        array $backupManifest,
+        Configuration $configuration,
+    ): string {
+        if (!file_exists($manifestPath)) {
+            return ManifestComparator::PEELED;
+        }
+
+        $manifest = $this->decodeManifest((string) file_get_contents($manifestPath));
+        if ($manifest === null) {
+            return ManifestComparator::MODIFIED;
+        }
+
+        return (new ManifestComparator($configuration))->compare($manifest, $backupManifest);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function decodeManifest(string $content): ?array
+    {
+        $manifest = json_decode($content, associative: true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($manifest)) {
+            return null;
+        }
+
+        /** @var array<string, mixed> $manifest */
+        return $manifest;
     }
 }

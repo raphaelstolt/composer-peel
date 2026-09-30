@@ -248,6 +248,16 @@ composer-peel rollback --commit
 The `--commit` option can be combined with `--keep-backup`. If the commit fails, e.g. because the current directory is
 not a Git repository, the command exits with an error and the backup file is kept.
 
+Before restoring, the `rollback` command verifies that `composer.json` still is the peeled version of the backup, i.e.
+the backup without the configured sections. If `composer.json` has been modified since it was peeled, the rollback is
+aborted, as restoring the backup would discard these changes. To restore the backup anyway, use the `--force` option:
+
+```bash
+composer-peel rollback --force
+```
+
+If `composer.json` already matches the backup, it is left untouched.
+
 You can also specify a custom backup file or configuration file during rollback:
 
 ```bash

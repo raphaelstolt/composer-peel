@@ -132,6 +132,8 @@ vendor/bin/composer-peel rollback
 
 This restores `composer.json` from the backup file configured in `.composer-peel.php` (defaulting to `.composer-unpeeled.json`) and removes the backup file.
 
+The rollback is aborted if `composer.json` has been modified since it was peeled, as restoring would discard these changes. Do not use `--force` to override this unless the user confirms that the changes to `composer.json` can be discarded.
+
 To preserve the backup file after restoration:
 
 ```bash
