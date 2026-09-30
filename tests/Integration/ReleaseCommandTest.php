@@ -61,18 +61,73 @@ class ReleaseCommandTest extends TestCase
             ->assertOutputContains('The composer-peel release workflow requires a clean working tree.');
     }
 
-    public function testExecuteReleaseFailsIfThereIsNothingToCommit(): void
+    public function testExecuteReleaseFailsIfManifestHasNotBeenPeeled(): void
     {
         TestCommand::for(new ReleaseCommand())
             ->execute('v1.0.0')
             ->assertStatusCode(1)
-            ->assertOutputContains("Git command failed: 'git' 'commit'");
+            ->assertOutputContains(
+                'Backup file .composer-unpeeled.json does not exist. Run the peel command before releasing.',
+            );
 
-        exec('git log --oneline', $logOutput);
-        static::assertCount(1, $logOutput);
+        $this->assertNoReleaseCreated();
+    }
 
-        exec('git tag', $tagOutput);
-        static::assertSame([], $tagOutput);
+    public function testExecuteReleaseFailsForUnpeeledManifestWithUnrelatedChange(): void
+    {
+        $manifest = $this->readManifestAt('HEAD');
+        $manifest['license'] = 'BSD-3-Clause';
+        file_put_contents('composer.json', (string) json_encode($manifest, JSON_PRETTY_PRINT));
+
+        TestCommand::for(new ReleaseCommand())
+            ->execute('v1.0.0')
+            ->assertStatusCode(1)
+            ->assertOutputContains('Run the peel command before releasing.');
+
+        $this->assertNoReleaseCreated();
+    }
+
+    public function testExecuteReleaseFailsIfManifestMatchesBackup(): void
+    {
+        copy('composer.json', '.composer-unpeeled.json');
+
+        TestCommand::for(new ReleaseCommand())
+            ->execute('v1.0.0')
+            ->assertStatusCode(1)
+            ->assertOutputContains('composer.json has not been peeled. Run the peel command before releasing.');
+
+        $this->assertNoReleaseCreated();
+    }
+
+    public function testExecuteReleaseFailsIfManifestWasModifiedAfterPeeling(): void
+    {
+        TestCommand::for(new PeelCommand())->execute()->assertSuccessful();
+
+        $manifest = json_decode((string) file_get_contents('composer.json'), associative: true);
+        static::assertIsArray($manifest);
+        $manifest['license'] = 'BSD-3-Clause';
+        file_put_contents('composer.json', (string) json_encode($manifest, JSON_PRETTY_PRINT));
+
+        TestCommand::for(new ReleaseCommand())
+            ->execute('v1.0.0')
+            ->assertStatusCode(1)
+            ->assertOutputContains('composer.json does not match the peeled version of .composer-unpeeled.json.')
+            ->assertOutputContains('Run the rollback and peel commands again before releasing.');
+
+        $this->assertNoReleaseCreated();
+    }
+
+    public function testExecuteReleaseFailsIfBackupIsInvalidJson(): void
+    {
+        TestCommand::for(new PeelCommand())->execute()->assertSuccessful();
+        file_put_contents('.composer-unpeeled.json', 'invalid json');
+
+        TestCommand::for(new ReleaseCommand())
+            ->execute('v1.0.0')
+            ->assertStatusCode(1)
+            ->assertOutputContains('Backup file .composer-unpeeled.json does not contain valid JSON.');
+
+        $this->assertNoReleaseCreated();
     }
 
     public function testExecuteReleaseFailsIfPeelBackupIsNotTheConfiguredBackup(): void
@@ -156,6 +211,15 @@ class ReleaseCommandTest extends TestCase
 
         exec('git status --porcelain --untracked-files=all', $statusOutput);
         static::assertSame([], $statusOutput);
+    }
+
+    private function assertNoReleaseCreated(): void
+    {
+        exec('git log --oneline', $logOutput);
+        static::assertCount(1, $logOutput);
+
+        exec('git tag', $tagOutput);
+        static::assertSame([], $tagOutput);
     }
 
     /**

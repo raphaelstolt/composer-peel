@@ -27,6 +27,7 @@ class ReleaseManager
 
         $this->verifyGitIsAvailable();
         $this->verifyOnlyManifestChanged();
+        $this->verifyManifestIsPeeled();
 
         $this->executeGitCommand(['git', 'add', 'composer.json']);
         $this->executeGitCommand(['git', 'commit', '-m', $this->configuration->getBeforeTagCommitMessage()]);
@@ -61,6 +62,47 @@ class ReleaseManager
                 throw new RuntimeException('The composer-peel release workflow requires a clean working tree.');
             }
         }
+    }
+
+    private function verifyManifestIsPeeled(): void
+    {
+        $backupPath = $this->configuration->getBackupPath();
+
+        if (!file_exists($backupPath)) {
+            throw new RuntimeException(
+                "Backup file {$backupPath} does not exist. Run the peel command before releasing.",
+            );
+        }
+
+        $manifest = $this->decodeManifest(getcwd() . '/composer.json', 'composer.json');
+        $backupManifest = $this->decodeManifest($backupPath, "Backup file {$backupPath}");
+
+        $state = (new ManifestComparator($this->configuration))->compare($manifest, $backupManifest);
+
+        if ($state === ManifestComparator::RESTORED) {
+            throw new RuntimeException('composer.json has not been peeled. Run the peel command before releasing.');
+        }
+
+        if ($state === ManifestComparator::MODIFIED) {
+            throw new RuntimeException(
+                "composer.json does not match the peeled version of {$backupPath}. "
+                . 'Run the rollback and peel commands again before releasing.',
+            );
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function decodeManifest(string $path, string $label): array
+    {
+        $manifest = json_decode((string) @file_get_contents($path), associative: true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($manifest)) {
+            throw new RuntimeException("{$label} does not contain valid JSON.");
+        }
+
+        /** @var array<string, mixed> $manifest */
+        return $manifest;
     }
 
     /**

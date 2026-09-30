@@ -34,10 +34,10 @@ class ManifestComparatorTest extends TestCase
 
     public function testCompareDetectsRestoredManifest(): void
     {
-        static::assertSame(
-            ManifestComparator::RESTORED,
-            $this->comparator->compare($this->backupManifest, $this->backupManifest),
-        );
+        static::assertSame(ManifestComparator::RESTORED, $this->comparator->compare(
+            $this->backupManifest,
+            $this->backupManifest,
+        ));
     }
 
     public function testCompareDetectsModifiedRuntimeSection(): void
@@ -68,9 +68,9 @@ class ManifestComparatorTest extends TestCase
 
         $manifest = ['name' => 'test/package', 'require' => ['php' => '>=8.2'], 'scripts' => ['test' => 'phpunit']];
 
-        static::assertSame(
-            ManifestComparator::PEELED,
-            (new ManifestComparator($configuration))->compare($manifest, $this->backupManifest),
-        );
+        static::assertSame(ManifestComparator::PEELED, (new ManifestComparator($configuration))->compare(
+            $manifest,
+            $this->backupManifest,
+        ));
     }
 }

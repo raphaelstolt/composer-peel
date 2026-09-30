@@ -124,7 +124,10 @@ class RollbackCommandTest extends TestCase
             ->assertOutputNotContains('Restoring composer.json')
             ->assertOutputContains('Backup removed successfully.');
 
-        static::assertSame((string) json_encode($backupManifest, JSON_PRETTY_PRINT), file_get_contents('composer.json'));
+        static::assertSame(
+            (string) json_encode($backupManifest, JSON_PRETTY_PRINT),
+            file_get_contents('composer.json'),
+        );
         static::assertFileDoesNotExist('.composer-unpeeled.json');
     }
 
