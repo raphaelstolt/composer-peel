@@ -76,6 +76,12 @@ Use a custom configuration:
 composer-peel peel --config=.composer-peel.php
 ```
 
+A backup can also be created before the manifest is modified:
+
+```bash
+composer-peel peel --backup-file=.composer-unpeeled.json
+```
+
 The `init` command is useful when you want to make the peeling policy explicit and version-controlled
 in your repository. It generates a configuration file from the current internal defaults, which you can then customise.
 
@@ -88,12 +94,6 @@ By default, the `init` command will not overwrite an existing configuration file
 
 ```bash
 composer-peel init --overwrite
-```
-
-A backup can also be created before the manifest is modified:
-
-```bash
-composer-peel peel --backup-file=.composer-unpeeled.json
 ```
 
 ## Previewing changes with `--dry-run`
@@ -150,7 +150,8 @@ If you need the dry-run output in a machine-readable format, you can use the `--
 composer-peel peel --dry-run --format=json
 ```
 
-When both `--format=json` and `--diff` are used, the resulting JSON object will contain an additional `diff` key with the unified diff string.
+When both `--format=json` and `--diff` are used, the resulting JSON object will contain an additional `diff` key with
+the unified diff string.
 
 ```json
 {
