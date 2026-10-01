@@ -417,6 +417,12 @@ default or configured commit message for a single release, use the `--commit-mes
 composer-peel release v1.0.0 --commit-message="chore: release v1.0.0"
 ```
 
+To preview the files that would be committed and the commit message and tag that would be created, use the `--dry-run` option:
+
+```bash
+composer-peel release v1.0.0 --dry-run
+```
+
 The resulting history looks like this:
 
 ```text

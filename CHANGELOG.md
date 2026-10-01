@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Added 
 - The allowed files of a `release` are configurable.
+- New `--dry-run` option for the `release` command.
 
 ## [v2.1.1] - 2026-10-01
 

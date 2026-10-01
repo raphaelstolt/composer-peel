@@ -17,7 +17,7 @@ class ReleaseManager
         $this->validator = $validator ?? new ReleaseVersionValidator();
     }
 
-    public function release(string $tag): void
+    public function release(string $tag, bool $isDryRun = false): ?ReleaseDryRunResult
     {
         $this->validator->validate($tag);
 
@@ -29,10 +29,20 @@ class ReleaseManager
         $filesToCommit = $this->getReleaseFilesToCommit();
         $this->verifyManifestIsPeeled();
 
+        if ($isDryRun) {
+            return new ReleaseDryRunResult(
+                $filesToCommit,
+                $this->configuration->getBeforeTagCommitMessage(),
+                $tag,
+            );
+        }
+
         $this->executeGitCommand(array_merge(['git', 'add'], $filesToCommit));
         $this->executeGitCommand(['git', 'commit', '-m', $this->configuration->getBeforeTagCommitMessage()]);
 
         $this->executeGitCommand(['git', 'tag', $tag]);
+
+        return null;
     }
 
     private function verifyGitIsAvailable(): void

@@ -120,6 +120,12 @@ To overwrite the default or configured `before_tag` commit message for a single 
 vendor/bin/composer-peel release v1.0.0 --commit-message="chore: release v1.0.0"
 ```
 
+To preview the files that would be committed and the commit message and tag that would be created without modifying Git:
+
+```bash
+vendor/bin/composer-peel release v1.0.0 --dry-run
+```
+
 Only use these commands when the user explicitly requests a release/tag operation.
 
 The tag must be a valid semantic version such as:

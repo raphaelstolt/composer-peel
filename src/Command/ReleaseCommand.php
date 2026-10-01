@@ -40,6 +40,13 @@ class ReleaseCommand extends Command
             InputOption::VALUE_REQUIRED,
             'Commit message for the peeled composer.json, overwriting the default or configured one',
         );
+
+        $this->addOption(
+            'dry-run',
+            null,
+            InputOption::VALUE_NONE,
+            'Preview the release operation without modifying Git',
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -75,6 +82,7 @@ class ReleaseCommand extends Command
         }
 
         $tag = $input->getArgument('tag');
+        $isDryRun = $input->getOption('dry-run') === true;
 
         if (is_string($tag)) {
             if ($this->releaseManager === null) {
@@ -82,7 +90,20 @@ class ReleaseCommand extends Command
             }
 
             try {
-                $this->releaseManager->release($tag);
+                $result = $this->releaseManager->release($tag, $isDryRun);
+
+                if ($isDryRun && $result !== null) {
+                    $output->writeln('<info>Files to be committed:</info>');
+                    foreach ($result->getFilesToCommit() as $file) {
+                        $output->writeln('+ ' . $file);
+                    }
+                    $output->writeln('');
+                    $output->writeln('<info>Commit:</info> ' . $result->getCommitMessage());
+                    $output->writeln('<info>Tag:</info> ' . $result->getTag());
+
+                    return Command::SUCCESS;
+                }
+
                 $output->writeln("Release workflow completed successfully for tag: {$tag}.");
                 return Command::SUCCESS;
             } catch (RuntimeException $e) {

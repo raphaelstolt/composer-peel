@@ -347,6 +347,35 @@ class ReleaseCommandTest extends TestCase
         static::assertContains('composer.json', $showOutput);
     }
 
+    public function testExecuteReleaseDryRun(): void
+    {
+        mkdir('bin');
+        file_put_contents('bin/composer-peel', 'binary content');
+        exec('git add bin/composer-peel');
+        exec('git commit -m "Add binary"');
+
+        TestCommand::for(new PeelCommand())->execute()->assertSuccessful();
+
+        file_put_contents('CHANGELOG.md', 'changelog content');
+        file_put_contents('bin/composer-peel', 'modified binary content');
+
+        TestCommand::for(new ReleaseCommand())
+            ->execute('v1.0.0 --dry-run')
+            ->assertSuccessful()
+            ->assertOutputContains('Files to be committed:')
+            ->assertOutputContains('+ composer.json')
+            ->assertOutputContains('+ CHANGELOG.md')
+            ->assertOutputContains('+ bin/composer-peel')
+            ->assertOutputContains('Commit: chore(dist): prepare Composer manifest for release')
+            ->assertOutputContains('Tag: v1.0.0');
+
+        exec('git log --oneline', $logOutput);
+        static::assertCount(2, $logOutput);
+
+        exec('git tag', $tagOutput);
+        static::assertSame([], $tagOutput);
+    }
+
     private function assertNoReleaseCreated(): void
     {
         exec('git log --oneline', $logOutput);
