@@ -29,11 +29,11 @@ class ConfigurationLoader
         $config->setBackupPath($configArray['release']['backup']['path'] ?? $config->getBackupPath());
         $config->setManagedFiles($configArray['release']['managed_files'] ?? $config->getManagedFiles());
 
-        $config->setBeforeTagCommitMessage(
-            $configArray['git']['commit_messages']['before_tag'] ?? $config->getBeforeTagCommitMessage(),
+        $config->setReleaseCommitMessage(
+            $configArray['git']['commit_messages']['release'] ?? $config->getReleaseCommitMessage(),
         );
-        $config->setAfterTagCommitMessage(
-            $configArray['git']['commit_messages']['after_tag'] ?? $config->getAfterTagCommitMessage(),
+        $config->setAfterReleaseCommitMessage(
+            $configArray['git']['commit_messages']['after_release'] ?? $config->getAfterReleaseCommitMessage(),
         );
 
         return $config;

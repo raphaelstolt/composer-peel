@@ -18,8 +18,8 @@ return [
     ],
     'git' => [
         'commit_messages' => [
-            'before_tag' => 'My before message',
-            'after_tag' => 'My after message',
+            'release' => 'My before message',
+            'after_release' => 'My after message',
         ],
     ],
 ];

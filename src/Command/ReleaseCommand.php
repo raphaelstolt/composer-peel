@@ -78,7 +78,7 @@ class ReleaseCommand extends Command
                 return Command::FAILURE;
             }
 
-            $configuration->setBeforeTagCommitMessage($commitMessage);
+            $configuration->setReleaseCommitMessage($commitMessage);
         }
 
         $tag = $input->getArgument('tag');

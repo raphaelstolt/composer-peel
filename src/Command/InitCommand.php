@@ -41,8 +41,8 @@ class InitCommand extends Command
         $managedFiles = implode("',\n            '", $configuration->getManagedFiles());
         $backupEnabled = $configuration->isBackupEnabled() ? 'true' : 'false';
         $backupPath = $configuration->getBackupPath();
-        $beforeTagMessage = $configuration->getBeforeTagCommitMessage();
-        $afterTagMessage = $configuration->getAfterTagCommitMessage();
+        $releaseMessage = $configuration->getReleaseCommitMessage();
+        $afterReleaseMessage = $configuration->getAfterReleaseCommitMessage();
 
         $configContent = <<<PHP
             <?php
@@ -66,8 +66,8 @@ class InitCommand extends Command
                 ],
                 'git' => [
                     'commit_messages' => [
-                        'before_tag' => '{$beforeTagMessage}',
-                        'after_tag' => '{$afterTagMessage}',
+                        'release' => '{$releaseMessage}',
+                        'after_release' => '{$afterReleaseMessage}',
                     ],
                 ],
             ];

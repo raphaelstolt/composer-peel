@@ -29,16 +29,18 @@ class ReleaseManager
         $filesToCommit = $this->getReleaseFilesToCommit();
         $this->verifyManifestIsPeeled();
 
+        $commitMessage = str_replace('{{version}}', $tag, $this->configuration->getReleaseCommitMessage());
+
         if ($isDryRun) {
             return new ReleaseDryRunResult(
                 $filesToCommit,
-                $this->configuration->getBeforeTagCommitMessage(),
+                $commitMessage,
                 $tag,
             );
         }
 
         $this->executeGitCommand(array_merge(['git', 'add'], $filesToCommit));
-        $this->executeGitCommand(['git', 'commit', '-m', $this->configuration->getBeforeTagCommitMessage()]);
+        $this->executeGitCommand(['git', 'commit', '-m', $commitMessage]);
 
         $this->executeGitCommand(['git', 'tag', $tag]);
 
@@ -152,6 +154,6 @@ class ReleaseManager
         $this->verifyGitIsAvailable();
 
         $this->executeGitCommand(['git', 'add', 'composer.json']);
-        $this->executeGitCommand(['git', 'commit', '-m', $this->configuration->getAfterTagCommitMessage()]);
+        $this->executeGitCommand(['git', 'commit', '-m', $this->configuration->getAfterReleaseCommitMessage()]);
     }
 }

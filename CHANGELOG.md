@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+### Changed
+- The configuration keys for commit messages have been renamed. `git.commit_messages.before_tag` is now 
+`git.commit_messages.release`, and `git.commit_messages.after_tag` is now `git.commit_messages.after_release`.
+
+### Added
+- The `release` commit message can now include a `{{version}}` placeholder, which will be automatically replaced with
+the provided release tag.
+
 ## [v2.2.1] - 2026-10-02
 
 ### Fixed

@@ -202,7 +202,7 @@ class ReleaseCommandTest extends TestCase
             return [
                 'git' => [
                     'commit_messages' => [
-                        'before_tag' => 'chore: configured release message',
+                        'release' => 'chore: configured release message',
                     ],
                 ],
             ];
@@ -374,6 +374,31 @@ class ReleaseCommandTest extends TestCase
 
         exec('git tag', $tagOutput);
         static::assertSame([], $tagOutput);
+    }
+
+    public function testExecuteReleaseReplacesVersionPlaceholderInCommitMessage(): void
+    {
+        file_put_contents('custom-config.php', <<<'PHP'
+            <?php
+
+            return [
+                'git' => [
+                    'commit_messages' => [
+                        'release' => 'chore(release): release {{version}}',
+                    ],
+                ],
+            ];
+            PHP);
+        exec('git add custom-config.php && git commit -m "Add configuration"');
+
+        TestCommand::for(new PeelCommand())->execute()->assertSuccessful();
+
+        TestCommand::for(new ReleaseCommand())->execute(
+            'v1.0.0 --config=custom-config.php',
+        )->assertSuccessful();
+
+        exec('git log -1 --pretty=%s', $logOutput);
+        static::assertSame(['chore(release): release v1.0.0'], $logOutput);
     }
 
     private function assertNoReleaseCreated(): void

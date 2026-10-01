@@ -304,8 +304,8 @@ return [
     ],
     'git' => [
         'commit_messages' => [
-            'before_tag' => 'chore(dist): prepare Composer manifest for release',
-            'after_tag' => 'chore: restore development Composer manifest',
+            'release' => 'chore: release version {{version}}',
+            'after_release' => 'chore: restore development Composer manifest',
         ],
     ],
 ];
@@ -361,15 +361,15 @@ The automated release workflow uses configurable commit messages:
 ```php
 'git' => [
     'commit_messages' => [
-        'before_tag' => 'chore(dist): prepare Composer manifest for release',
-        'after_tag' => 'chore: restore development Composer manifest',
+        'release' => 'chore(dist): prepare Composer manifest for release',
+        'after_release' => 'chore: restore development Composer manifest',
     ],
 ],
 ```
 
-`before_tag` is used for the commit containing the peeled manifest.
+`release` is used for the commit containing the peeled manifest.
 
-`after_tag` is used by `rollback --commit` for the commit restoring the original development manifest.
+`after_release` is used by `rollback --commit` for the commit restoring the original development manifest.
 
 Both messages can be overwritten per invocation via the `--commit-message` option of the `release` and
 `rollback --commit` commands.
@@ -410,8 +410,9 @@ configured sections. The release is aborted without creating a commit or tag if 
 `peel` again. For the full set of checks, including `composer validate`, use the
 [`validate`](#validating-the-peeled-manifest) command.
 
-The commit messages used for the release workflow can be configured through `.composer-peel.php`. To overwrite the
-default or configured commit message for a single release, use the `--commit-message` option:
+The commit messages used for the release workflow can be configured through `.composer-peel.php`. The `release` commit message can include a `{{version}}` placeholder which will be automatically replaced with the provided tag.
+
+To overwrite the default or configured commit message for a single release, use the `--commit-message` option:
 
 ```bash
 composer-peel release v1.0.0 --commit-message="chore: release v1.0.0"

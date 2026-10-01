@@ -46,8 +46,8 @@ final class Configuration
 
     private bool $backupEnabled = true;
     private string $backupPath = '.composer-unpeeled.json';
-    private string $beforeTagCommitMessage = 'chore(dist): prepare Composer manifest for release';
-    private string $afterTagCommitMessage = 'chore: restore development Composer manifest';
+    private string $releaseCommitMessage = 'chore: release version {{version}}';
+    private string $afterReleaseCommitMessage = 'chore: restore development Composer manifest';
 
     /** @var array<int, string> */
     private array $managedFiles = [
@@ -99,24 +99,24 @@ final class Configuration
         $this->backupPath = $backupPath;
     }
 
-    public function getBeforeTagCommitMessage(): string
+    public function getReleaseCommitMessage(): string
     {
-        return $this->beforeTagCommitMessage;
+        return $this->releaseCommitMessage;
     }
 
-    public function setBeforeTagCommitMessage(string $beforeTagCommitMessage): void
+    public function setReleaseCommitMessage(string $releaseCommitMessage): void
     {
-        $this->beforeTagCommitMessage = $beforeTagCommitMessage;
+        $this->releaseCommitMessage = $releaseCommitMessage;
     }
 
-    public function getAfterTagCommitMessage(): string
+    public function getAfterReleaseCommitMessage(): string
     {
-        return $this->afterTagCommitMessage;
+        return $this->afterReleaseCommitMessage;
     }
 
-    public function setAfterTagCommitMessage(string $afterTagCommitMessage): void
+    public function setAfterReleaseCommitMessage(string $afterReleaseCommitMessage): void
     {
-        $this->afterTagCommitMessage = $afterTagCommitMessage;
+        $this->afterReleaseCommitMessage = $afterReleaseCommitMessage;
     }
 
     /**

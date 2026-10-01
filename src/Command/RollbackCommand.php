@@ -89,7 +89,7 @@ class RollbackCommand extends Command
                 return Command::FAILURE;
             }
 
-            $configuration->setAfterTagCommitMessage($commitMessage);
+            $configuration->setAfterReleaseCommitMessage($commitMessage);
         }
 
         $backupPath = $configuration->getBackupPath();

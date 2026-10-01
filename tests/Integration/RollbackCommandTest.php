@@ -305,7 +305,7 @@ class RollbackCommandTest extends TestCase
             return [
                 'git' => [
                     'commit_messages' => [
-                        'after_tag' => 'chore: back to development',
+                        'after_release' => 'chore: back to development',
                     ],
                 ],
             ];
@@ -327,7 +327,7 @@ class RollbackCommandTest extends TestCase
             return [
                 'git' => [
                     'commit_messages' => [
-                        'after_tag' => 'chore: back to development',
+                        'after_release' => 'chore: back to development',
                     ],
                 ],
             ];
