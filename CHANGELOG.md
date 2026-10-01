@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+## [v2.2.1] - 2026-10-02
+
 ### Fixed
 - A tagged `release` can also include changes to the `CHANGELOG.md` or files in `bin/`.
 
@@ -82,7 +84,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Initial implementation.
 
 
-[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v2.2.1...HEAD
+[v2.2.1]: https://github.com/raphaelstolt/composer-peel/compare/v2.1.1...v2.2.1
 [v2.1.1]: https://github.com/raphaelstolt/composer-peel/compare/v2.1.0...v2.1.1
 [v2.1.0]: https://github.com/raphaelstolt/composer-peel/compare/v2.0.0...v2.1.0
 [v2.0.0]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.2...v2.0.0
