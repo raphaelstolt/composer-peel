@@ -178,7 +178,7 @@ class ReleaseCommandTest extends TestCase
             ->assertOutputContains('Release workflow completed successfully for tag: v1.0.0.');
 
         exec('git log --pretty=%s', $logOutput);
-        static::assertSame(['chore(dist): prepare Composer manifest for release', 'Initial commit'], $logOutput);
+        static::assertSame(['chore: release version v1.0.0', 'Initial commit'], $logOutput);
 
         exec('git tag --points-at HEAD', $tagOutput);
         static::assertSame(['v1.0.0'], $tagOutput);
@@ -258,7 +258,7 @@ class ReleaseCommandTest extends TestCase
         static::assertSame(
             [
                 'chore: restore development Composer manifest',
-                'chore(dist): prepare Composer manifest for release',
+                'chore: release version v1.0.0',
                 'Initial commit',
             ],
             $logOutput,
@@ -294,7 +294,7 @@ class ReleaseCommandTest extends TestCase
             ->assertOutputContains('Release workflow completed successfully for tag: v1.0.0.');
 
         exec('git log -1 --pretty=%s', $logOutput);
-        static::assertSame(['chore(dist): prepare Composer manifest for release'], $logOutput);
+        static::assertSame(['chore: release version v1.0.0'], $logOutput);
 
         exec('git tag --points-at HEAD', $tagOutput);
         static::assertSame(['v1.0.0'], $tagOutput);
@@ -366,7 +366,7 @@ class ReleaseCommandTest extends TestCase
             ->assertOutputContains('+ composer.json')
             ->assertOutputContains('+ CHANGELOG.md')
             ->assertOutputContains('+ bin/composer-peel')
-            ->assertOutputContains('Commit: chore(dist): prepare Composer manifest for release')
+            ->assertOutputContains('Commit: chore: release version v1.0.0')
             ->assertOutputContains('Tag: v1.0.0');
 
         exec('git log --oneline', $logOutput);
