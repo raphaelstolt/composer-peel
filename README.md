@@ -361,7 +361,7 @@ The automated release workflow uses configurable commit messages:
 ```php
 'git' => [
     'commit_messages' => [
-        'release' => 'chore(dist): prepare Composer manifest for release',
+        'release' => 'chore: release version {{version}}',
         'after_release' => 'chore: restore development Composer manifest',
     ],
 ],
