@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+## [v2.1.1] - 2026-10-01
+
 ### Fixed
 - The Git tag passed to the `release` command is validated more thoroughly. Closes [#6](https://github.com/raphaelstolt/composer-peel/issues/6). 
 
@@ -73,7 +75,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Initial implementation.
 
 
-[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v2.1.1...HEAD
+[v2.1.1]: https://github.com/raphaelstolt/composer-peel/compare/v2.1.0...v2.1.1
 [v2.1.0]: https://github.com/raphaelstolt/composer-peel/compare/v2.0.0...v2.1.0
 [v2.0.0]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.2...v2.0.0
 [v1.3.2]: https://github.com/raphaelstolt/composer-peel/compare/v1.3.1...v1.3.2
