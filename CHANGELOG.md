@@ -11,7 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Changed
 - The configuration keys for commit messages have been renamed. `git.commit_messages.before_tag` is now 
-`git.commit_messages.release`, and `git.commit_messages.after_tag` is now `git.commit_messages.after_release`.
+`git.commit_messages.release`, and `git.commit_messages.after_tag` is now `git.commit_messages.after_release`. Closes
+[#7](https://github.com/raphaelstolt/composer-peel/issues/7).
 
 ### Added
 - The `release` commit message can now include a `{{version}}` placeholder, which will be automatically replaced with
