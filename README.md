@@ -292,14 +292,16 @@ return [
             'scripts-aliases',
         ],
     ],
-
     'release' => [
         'backup' => [
             'enabled' => true,
             'path' => '.composer-unpeeled.json',
         ],
+        'managed_files' => [
+            'CHANGELOG.md',
+            'bin/',
+        ],
     ],
-
     'git' => [
         'commit_messages' => [
             'before_tag' => 'chore(dist): prepare Composer manifest for release',
@@ -397,8 +399,10 @@ The workflow is:
 3. Run `release` to commit the peeled manifest and create the Git tag.
 4. Run `rollback --commit` to restore the original development `composer.json` and commit the changes.
 
-The `release` command requires a clean working tree. The only allowed changes are the peeled `composer.json`, the
+The `release` command requires a clean working tree. By default, the only allowed changes are the peeled `composer.json`, the
 backup file created by `peel`, the `CHANGELOG.md` file, and any modified files in the `bin/` directory.
+
+You can override which files are allowed to be modified and committed during the release by adding a `managed_files` array to the `release` section in your `.composer-peel.php`. This will replace the default `CHANGELOG.md` and `bin/` allowances. Directories should end with a trailing slash (`/`).
 
 Before committing, the `release` command also verifies that `composer.json` is exactly the backup file without the
 configured sections. The release is aborted without creating a commit or tag if the backup file is missing, if

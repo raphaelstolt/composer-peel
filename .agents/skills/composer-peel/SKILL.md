@@ -110,7 +110,7 @@ vendor/bin/composer-peel rollback --commit
 3. `release <tag>` commits the already peeled `composer.json` using the `before_tag` commit message and creates the Git tag. It does not peel and does not restore the development manifest.
 4. `rollback --commit` restores the development `composer.json` from the backup and commits it using the `after_tag` commit message.
 
-`release` requires a clean working tree. The only allowed changes are the peeled `composer.json`, the backup file, `CHANGELOG.md`, and any files within the `bin/` directory. Other uncommitted or untracked files cause the command to fail.
+`release` requires a clean working tree. The only allowed changes are the peeled `composer.json`, the backup file, and any configured `managed_files` (which defaults to `CHANGELOG.md` and any files within the `bin/` directory, but replacing this array in the configuration will override these defaults). Other uncommitted or untracked files cause the command to fail.
 
 Before committing, `release` verifies that the backup file exists and that `composer.json` is exactly the backup without the configured sections. It fails if `composer.json` has not been peeled or has been modified after peeling. It does not run the full `validate` checks (e.g., `composer validate`), so run `validate` before `release`. If a check fails, no commit or tag is created; fix the manifest via `rollback` and a fresh `peel` instead of editing it by hand.
 
@@ -195,6 +195,10 @@ return [
         'backup' => [
             'enabled' => true,
             'path' => '.composer-unpeeled.json',
+        ],
+        'managed_files' => [
+            'CHANGELOG.md',
+            'bin/',
         ],
     ],
 

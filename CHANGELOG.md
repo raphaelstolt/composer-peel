@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Fixed
 - A tagged `release` can also include changes to the `CHANGELOG.md` or files in `bin/`.
 
+### Added 
+- The allowed files of a `release` are configurable.
+
 ## [v2.1.1] - 2026-10-01
 
 ### Fixed

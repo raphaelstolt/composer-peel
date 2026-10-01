@@ -11,6 +11,10 @@ return [
             'enabled' => false,
             'path' => 'my-backup.json',
         ],
+        'managed_files' => [
+            'my-file.txt',
+            'my-dir/',
+        ],
     ],
     'git' => [
         'commit_messages' => [

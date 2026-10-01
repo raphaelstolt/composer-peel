@@ -306,6 +306,47 @@ class ReleaseCommandTest extends TestCase
         static::assertContains('composer.json', $showOutput);
     }
 
+    public function testExecuteReleaseAllowsCustomManagedFiles(): void
+    {
+        file_put_contents('custom-config.php', <<<'PHP'
+            <?php
+
+            return [
+                'release' => [
+                    'managed_files' => [
+                        'README.md',
+                        'scripts/',
+                    ],
+                ],
+            ];
+            PHP);
+        exec('git add custom-config.php && git commit -m "Add custom managed_files configuration"');
+
+        mkdir('scripts');
+        file_put_contents('scripts/build.sh', 'build content');
+        exec('git add scripts/build.sh');
+        exec('git commit -m "Add script"');
+        
+        file_put_contents('README.md', 'some readme content');
+        exec('git add README.md');
+        exec('git commit -m "Add README"');
+
+        TestCommand::for(new PeelCommand())->execute('--config=custom-config.php')->assertSuccessful();
+
+        file_put_contents('README.md', 'modified readme content');
+        file_put_contents('scripts/build.sh', 'modified build content');
+
+        TestCommand::for(new ReleaseCommand())
+            ->execute('v1.0.0 --config=custom-config.php')
+            ->assertSuccessful()
+            ->assertOutputContains('Release workflow completed successfully for tag: v1.0.0.');
+
+        exec('git show --name-only ' . escapeshellarg('v1.0.0'), $showOutput);
+        static::assertContains('README.md', $showOutput);
+        static::assertContains('scripts/build.sh', $showOutput);
+        static::assertContains('composer.json', $showOutput);
+    }
+
     private function assertNoReleaseCreated(): void
     {
         exec('git log --oneline', $logOutput);

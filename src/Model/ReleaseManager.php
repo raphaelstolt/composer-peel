@@ -53,12 +53,24 @@ class ReleaseManager
             throw new RuntimeException('The composer-peel release workflow requires a clean working tree.');
         }
 
-        $allowedPaths = ['composer.json', $this->configuration->getBackupPath(), 'CHANGELOG.md'];
+        $allowedPaths = array_merge(
+            ['composer.json', $this->configuration->getBackupPath()],
+            $this->configuration->getManagedFiles()
+        );
         $filesToCommit = ['composer.json'];
 
         foreach ($output as $line) {
             $path = substr($line, 3);
-            if (in_array($path, $allowedPaths, true) || str_starts_with($path, 'bin/')) {
+
+            $isAllowed = false;
+            foreach ($allowedPaths as $allowedPath) {
+                if ($path === $allowedPath || (str_ends_with($allowedPath, '/') && str_starts_with($path, $allowedPath))) {
+                    $isAllowed = true;
+                    break;
+                }
+            }
+
+            if ($isAllowed) {
                 if ($path !== $this->configuration->getBackupPath() && $path !== 'composer.json') {
                     $filesToCommit[] = $path;
                 }

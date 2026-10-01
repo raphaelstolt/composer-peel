@@ -49,6 +49,12 @@ final class Configuration
     private string $beforeTagCommitMessage = 'chore(dist): prepare Composer manifest for release';
     private string $afterTagCommitMessage = 'chore: restore development Composer manifest';
 
+    /** @var array<int, string> */
+    private array $managedFiles = [
+        'CHANGELOG.md',
+        'bin/',
+    ];
+
     /**
      * @return array<int, string>
      */
@@ -111,5 +117,21 @@ final class Configuration
     public function setAfterTagCommitMessage(string $afterTagCommitMessage): void
     {
         $this->afterTagCommitMessage = $afterTagCommitMessage;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getManagedFiles(): array
+    {
+        return $this->managedFiles;
+    }
+
+    /**
+     * @param array<int, string> $managedFiles
+     */
+    public function setManagedFiles(array $managedFiles): void
+    {
+        $this->managedFiles = $managedFiles;
     }
 }

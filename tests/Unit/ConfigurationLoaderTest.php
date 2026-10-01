@@ -36,6 +36,7 @@ class ConfigurationLoaderTest extends TestCase
         static::assertSame(['require-dev', 'scripts'], $config->getPeelSections());
         static::assertFalse($config->isBackupEnabled());
         static::assertSame('my-backup.json', $config->getBackupPath());
+        static::assertSame(['my-file.txt', 'my-dir/'], $config->getManagedFiles());
         static::assertSame('My before message', $config->getBeforeTagCommitMessage());
         static::assertSame('My after message', $config->getAfterTagCommitMessage());
     }

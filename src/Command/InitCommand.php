@@ -38,6 +38,7 @@ class InitCommand extends Command
         $configuration = new Configuration();
 
         $peelSections = implode("',\n            '", $configuration->getPeelSections());
+        $managedFiles = implode("',\n            '", $configuration->getManagedFiles());
         $backupEnabled = $configuration->isBackupEnabled() ? 'true' : 'false';
         $backupPath = $configuration->getBackupPath();
         $beforeTagMessage = $configuration->getBeforeTagCommitMessage();
@@ -58,6 +59,9 @@ class InitCommand extends Command
                     'backup' => [
                         'enabled' => {$backupEnabled},
                         'path' => '{$backupPath}',
+                    ],
+                    'managed_files' => [
+                        '{$managedFiles}',
                     ],
                 ],
                 'git' => [

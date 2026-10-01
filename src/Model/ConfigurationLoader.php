@@ -27,6 +27,7 @@ class ConfigurationLoader
 
         $config->setBackupEnabled($configArray['release']['backup']['enabled'] ?? $config->isBackupEnabled());
         $config->setBackupPath($configArray['release']['backup']['path'] ?? $config->getBackupPath());
+        $config->setManagedFiles($configArray['release']['managed_files'] ?? $config->getManagedFiles());
 
         $config->setBeforeTagCommitMessage(
             $configArray['git']['commit_messages']['before_tag'] ?? $config->getBeforeTagCommitMessage(),
