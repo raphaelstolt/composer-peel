@@ -275,6 +275,37 @@ class ReleaseCommandTest extends TestCase
         static::assertSame([], $statusOutput);
     }
 
+    public function testExecuteReleaseAllowsChangelogAndBinFiles(): void
+    {
+        mkdir('bin');
+        file_put_contents('bin/composer-peel', 'binary content');
+        exec('git add bin/composer-peel');
+        exec('git commit -m "Add binary"');
+
+        TestCommand::for(new PeelCommand())->execute()->assertSuccessful();
+
+        file_put_contents('CHANGELOG.md', 'changelog content');
+        file_put_contents('bin/composer-peel', 'modified binary content');
+        file_put_contents('bin/server', 'new binary content');
+
+        TestCommand::for(new ReleaseCommand())
+            ->execute('v1.0.0')
+            ->assertSuccessful()
+            ->assertOutputContains('Release workflow completed successfully for tag: v1.0.0.');
+
+        exec('git log -1 --pretty=%s', $logOutput);
+        static::assertSame(['chore(dist): prepare Composer manifest for release'], $logOutput);
+
+        exec('git tag --points-at HEAD', $tagOutput);
+        static::assertSame(['v1.0.0'], $tagOutput);
+
+        exec('git show --name-only ' . escapeshellarg('v1.0.0'), $showOutput);
+        static::assertContains('CHANGELOG.md', $showOutput);
+        static::assertContains('bin/composer-peel', $showOutput);
+        static::assertContains('bin/server', $showOutput);
+        static::assertContains('composer.json', $showOutput);
+    }
+
     private function assertNoReleaseCreated(): void
     {
         exec('git log --oneline', $logOutput);

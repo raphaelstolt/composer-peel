@@ -26,10 +26,10 @@ class ReleaseManager
         }
 
         $this->verifyGitIsAvailable();
-        $this->verifyOnlyManifestChanged();
+        $filesToCommit = $this->getReleaseFilesToCommit();
         $this->verifyManifestIsPeeled();
 
-        $this->executeGitCommand(['git', 'add', 'composer.json']);
+        $this->executeGitCommand(array_merge(['git', 'add'], $filesToCommit));
         $this->executeGitCommand(['git', 'commit', '-m', $this->configuration->getBeforeTagCommitMessage()]);
 
         $this->executeGitCommand(['git', 'tag', $tag]);
@@ -43,19 +43,31 @@ class ReleaseManager
         }
     }
 
-    private function verifyOnlyManifestChanged(): void
+    /**
+     * @return array<int, string>
+     */
+    private function getReleaseFilesToCommit(): array
     {
         exec('git status --porcelain --untracked-files=all', $output, $resultCode);
         if ($resultCode !== 0) {
             throw new RuntimeException('The composer-peel release workflow requires a clean working tree.');
         }
 
-        $allowedPaths = ['composer.json', $this->configuration->getBackupPath()];
+        $allowedPaths = ['composer.json', $this->configuration->getBackupPath(), 'CHANGELOG.md'];
+        $filesToCommit = ['composer.json'];
+
         foreach ($output as $line) {
-            if (!in_array(substr($line, 3), $allowedPaths, true)) {
+            $path = substr($line, 3);
+            if (in_array($path, $allowedPaths, true) || str_starts_with($path, 'bin/')) {
+                if ($path !== $this->configuration->getBackupPath() && $path !== 'composer.json') {
+                    $filesToCommit[] = $path;
+                }
+            } else {
                 throw new RuntimeException('The composer-peel release workflow requires a clean working tree.');
             }
         }
+
+        return $filesToCommit;
     }
 
     private function verifyManifestIsPeeled(): void

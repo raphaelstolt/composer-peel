@@ -397,8 +397,8 @@ The workflow is:
 3. Run `release` to commit the peeled manifest and create the Git tag.
 4. Run `rollback --commit` to restore the original development `composer.json` and commit the changes.
 
-The `release` command requires a clean working tree. The only allowed changes are the peeled `composer.json` and the
-backup file created by `peel`.
+The `release` command requires a clean working tree. The only allowed changes are the peeled `composer.json`, the
+backup file created by `peel`, the `CHANGELOG.md` file, and any modified files in the `bin/` directory.
 
 Before committing, the `release` command also verifies that `composer.json` is exactly the backup file without the
 configured sections. The release is aborted without creating a commit or tag if the backup file is missing, if

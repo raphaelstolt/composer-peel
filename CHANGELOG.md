@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+### Fixed
+- A tagged `release` can also include changes to the `CHANGELOG.md` or files in `bin/`.
+
 ## [v2.1.1] - 2026-10-01
 
 ### Fixed
