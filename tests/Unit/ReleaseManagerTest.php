@@ -16,7 +16,8 @@ class ReleaseManagerTest extends TestCase
         $config = new Configuration();
         $config->setBackupEnabled(false);
 
-        $manager = new ReleaseManager($config);
+        $validator = $this->createMock(\Stolt\ComposerPeel\Model\ReleaseVersionValidator::class);
+        $manager = new ReleaseManager($config, $validator);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Release workflow requires backup to be enabled.');
@@ -28,7 +29,16 @@ class ReleaseManagerTest extends TestCase
     {
         $config = new Configuration();
 
-        $manager = new ReleaseManager($config);
+        $validator = $this->createMock(\Stolt\ComposerPeel\Model\ReleaseVersionValidator::class);
+        $validator
+            ->expects($this->once())
+            ->method('validate')
+            ->with('invalid-tag')
+            ->willThrowException(
+                new RuntimeException("The provided Git tag 'invalid-tag' is not a valid semantic version."),
+            );
+
+        $manager = new ReleaseManager($config, $validator);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage("The provided Git tag 'invalid-tag' is not a valid semantic version.");

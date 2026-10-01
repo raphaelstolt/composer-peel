@@ -128,6 +128,8 @@ The tag must be a valid semantic version such as:
 v1.0.0
 ```
 
+`release` also enforces that the tag does not already exist and is strictly greater than the latest released version.
+
 ### Rollback Changes
 
 To restore the development `composer.json` from a backup file (e.g., after a failed release or to revert a manual peel operation):

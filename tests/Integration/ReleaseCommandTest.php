@@ -51,6 +51,28 @@ class ReleaseCommandTest extends TestCase
             ->assertOutputContains("The provided Git tag 'invalid-tag' is not a valid semantic version.");
     }
 
+    public function testExecuteReleaseThrowsErrorForExistingTag(): void
+    {
+        exec('git tag v1.0.0');
+
+        TestCommand::for(new ReleaseCommand())
+            ->execute('v1.0.0')
+            ->assertStatusCode(1)
+            ->assertOutputContains("The provided Git tag 'v1.0.0' already exists.");
+    }
+
+    public function testExecuteReleaseThrowsErrorForTagNotGreaterThanLatest(): void
+    {
+        exec('git tag v1.1.0');
+
+        TestCommand::for(new ReleaseCommand())
+            ->execute('v1.0.0')
+            ->assertStatusCode(1)
+            ->assertOutputContains(
+                "The requested version 'v1.0.0' must be greater than the latest released version 'v1.1.0'.",
+            );
+    }
+
     public function testExecuteReleaseThrowsErrorForDirtyWorkingTree(): void
     {
         file_put_contents('README.md', 'Uncommitted change');

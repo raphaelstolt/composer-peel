@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+### Fixed
+- The Git tag passed to the `release` command is validated more thoroughly. Closes [#6](https://github.com/raphaelstolt/composer-peel/issues/6). 
+
 ## [v2.1.0] - 2026-09-30
 
 ### Added

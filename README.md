@@ -385,6 +385,11 @@ composer-peel release v1.0.0
 composer-peel rollback --commit
 ```
 
+The `release` command validates the requested tag before proceeding. It requires that:
+- the tag is a valid Semantic Version (e.g. `v1.0.0`),
+- the tag does not already exist,
+- the tag is strictly greater than the latest released version.
+
 The workflow is:
 
 1. Run `peel` to remove the configured development-only sections from `composer.json`.

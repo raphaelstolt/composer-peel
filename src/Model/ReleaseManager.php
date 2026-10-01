@@ -9,17 +9,17 @@ use RuntimeException;
 class ReleaseManager
 {
     private Configuration $configuration;
+    private ReleaseVersionValidator $validator;
 
-    public function __construct(Configuration $configuration)
+    public function __construct(Configuration $configuration, ?ReleaseVersionValidator $validator = null)
     {
         $this->configuration = $configuration;
+        $this->validator = $validator ?? new ReleaseVersionValidator();
     }
 
     public function release(string $tag): void
     {
-        if (!$this->isValidSemver($tag)) {
-            throw new RuntimeException("The provided Git tag '{$tag}' is not a valid semantic version.");
-        }
+        $this->validator->validate($tag);
 
         if (!$this->configuration->isBackupEnabled()) {
             throw new RuntimeException('Release workflow requires backup to be enabled.');
@@ -33,12 +33,6 @@ class ReleaseManager
         $this->executeGitCommand(['git', 'commit', '-m', $this->configuration->getBeforeTagCommitMessage()]);
 
         $this->executeGitCommand(['git', 'tag', $tag]);
-    }
-
-    private function isValidSemver(string $tag): bool
-    {
-        $regex = '/^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-zA-Z0-9-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-zA-Z0-9-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/';
-        return preg_match($regex, $tag) === 1;
     }
 
     private function verifyGitIsAvailable(): void
