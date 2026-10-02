@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+## [v4.1.0] - 2026-10-02
+
 ### Added
 - New `--dry-run` option for the `rollback` command.
 
@@ -105,7 +107,8 @@ the provided release tag.
 - Initial implementation.
 
 
-[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v4.0.0...HEAD
+[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v4.1.0...HEAD
+[v4.1.0]: https://github.com/raphaelstolt/composer-peel/compare/v4.0.0...v4.1.0
 [v4.0.0]: https://github.com/raphaelstolt/composer-peel/compare/v3.0.0...v4.0.0
 [v3.0.0]: https://github.com/raphaelstolt/composer-peel/compare/v2.2.1...v3.0.0
 [v2.2.1]: https://github.com/raphaelstolt/composer-peel/compare/v2.1.1...v2.2.1
