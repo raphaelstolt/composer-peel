@@ -303,10 +303,8 @@ class RollbackCommandTest extends TestCase
             <?php
 
             return [
-                'git' => [
-                    'commit_messages' => [
-                        'after_release' => 'chore: back to development',
-                    ],
+                'rollback' => [
+                    'commit_message' => 'chore: back to development',
                 ],
             ];
             PHP);
@@ -325,10 +323,8 @@ class RollbackCommandTest extends TestCase
             <?php
 
             return [
-                'git' => [
-                    'commit_messages' => [
-                        'after_release' => 'chore: back to development',
-                    ],
+                'rollback' => [
+                    'commit_message' => 'chore: back to development',
                 ],
             ];
             PHP);

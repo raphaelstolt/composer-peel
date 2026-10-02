@@ -27,13 +27,13 @@ class ConfigurationLoader
 
         $config->setBackupEnabled($configArray['release']['backup']['enabled'] ?? $config->isBackupEnabled());
         $config->setBackupPath($configArray['release']['backup']['path'] ?? $config->getBackupPath());
-        $config->setManagedFiles($configArray['release']['managed_files'] ?? $config->getManagedFiles());
+        $config->setManagedFiles($configArray['release']['files'] ?? $config->getManagedFiles());
 
         $config->setReleaseCommitMessage(
-            $configArray['git']['commit_messages']['release'] ?? $config->getReleaseCommitMessage(),
+            $configArray['release']['commit_message'] ?? $config->getReleaseCommitMessage(),
         );
-        $config->setAfterReleaseCommitMessage(
-            $configArray['git']['commit_messages']['after_release'] ?? $config->getAfterReleaseCommitMessage(),
+        $config->setRollbackCommitMessage(
+            $configArray['rollback']['commit_message'] ?? $config->getRollbackCommitMessage(),
         );
 
         return $config;

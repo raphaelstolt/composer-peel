@@ -38,11 +38,11 @@ class InitCommand extends Command
         $configuration = new Configuration();
 
         $peelSections = implode("',\n            '", $configuration->getPeelSections());
-        $managedFiles = implode("',\n            '", $configuration->getManagedFiles());
+        $files = implode("',\n            '", $configuration->getManagedFiles());
         $backupEnabled = $configuration->isBackupEnabled() ? 'true' : 'false';
         $backupPath = $configuration->getBackupPath();
         $releaseMessage = $configuration->getReleaseCommitMessage();
-        $afterReleaseMessage = $configuration->getAfterReleaseCommitMessage();
+        $rollbackMessage = $configuration->getRollbackCommitMessage();
 
         $configContent = <<<PHP
             <?php
@@ -60,15 +60,13 @@ class InitCommand extends Command
                         'enabled' => {$backupEnabled},
                         'path' => '{$backupPath}',
                     ],
-                    'managed_files' => [
-                        '{$managedFiles}',
+                    'files' => [
+                        '{$files}',
                     ],
+                    'commit_message' => '{$releaseMessage}',
                 ],
-                'git' => [
-                    'commit_messages' => [
-                        'release' => '{$releaseMessage}',
-                        'after_release' => '{$afterReleaseMessage}',
-                    ],
+                'rollback' => [
+                    'commit_message' => '{$rollbackMessage}',
                 ],
             ];
 

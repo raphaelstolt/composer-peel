@@ -108,9 +108,9 @@ vendor/bin/composer-peel rollback --commit
 1. `peel` creates the backup and removes the configured sections from `composer.json`.
 2. `validate` reports on the peeled `composer.json` without modifying anything. `release` does not run these checks itself.
 3. `release <tag>` commits the already peeled `composer.json` using the `release` commit message and creates the Git tag. It does not peel and does not restore the development manifest.
-4. `rollback --commit` restores the development `composer.json` from the backup and commits it using the `after_release` commit message.
+4. `rollback --commit` restores the development `composer.json` from the backup and commits it using the `rollback.commit_message`.
 
-`release` requires a clean working tree. The only allowed changes are the peeled `composer.json`, the backup file, and any configured `managed_files` (which defaults to `CHANGELOG.md` and any files within the `bin/` directory, but replacing this array in the configuration will override these defaults). Other uncommitted or untracked files cause the command to fail.
+`release` requires a clean working tree. The only allowed changes are the peeled `composer.json`, the backup file, and any configured `release.files` (which defaults to `CHANGELOG.md` and any files within the `bin/` directory, but replacing this array in the configuration will override these defaults). Other uncommitted or untracked files cause the command to fail.
 
 Before committing, `release` verifies that the backup file exists and that `composer.json` is exactly the backup without the configured sections. It fails if `composer.json` has not been peeled or has been modified after peeling. It does not run the full `validate` checks (e.g., `composer validate`), so run `validate` before `release`. If a check fails, no commit or tag is created; fix the manifest via `rollback` and a fresh `peel` instead of editing it by hand.
 
@@ -156,7 +156,7 @@ To preserve the backup file after restoration:
 vendor/bin/composer-peel rollback --keep-backup
 ```
 
-To commit the restored `composer.json` to Git using the configured `after_release` commit message:
+To commit the restored `composer.json` to Git using the configured `rollback.commit_message`:
 
 ```bash
 vendor/bin/composer-peel rollback --commit
@@ -204,17 +204,15 @@ return [
             'enabled' => true,
             'path' => '.composer-unpeeled.json',
         ],
-        'managed_files' => [
+        'files' => [
             'CHANGELOG.md',
             'bin/',
         ],
+        'commit_message' => 'chore(dist): prepare Composer manifest for release',
     ],
 
-    'git' => [
-        'commit_messages' => [
-            'release' => 'chore(dist): prepare Composer manifest for release',
-            'after_release' => 'chore: restore development Composer manifest',
-        ],
+    'rollback' => [
+        'commit_message' => 'chore: restore development Composer manifest',
     ],
 ];
 ```

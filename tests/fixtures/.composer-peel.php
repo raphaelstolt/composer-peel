@@ -11,15 +11,13 @@ return [
             'enabled' => false,
             'path' => 'my-backup.json',
         ],
-        'managed_files' => [
+        'files' => [
             'my-file.txt',
             'my-dir/',
         ],
+        'commit_message' => 'My before message',
     ],
-    'git' => [
-        'commit_messages' => [
-            'release' => 'My before message',
-            'after_release' => 'My after message',
-        ],
+    'rollback' => [
+        'commit_message' => 'My after message',
     ],
 ];

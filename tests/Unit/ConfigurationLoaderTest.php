@@ -38,7 +38,7 @@ class ConfigurationLoaderTest extends TestCase
         static::assertSame('my-backup.json', $config->getBackupPath());
         static::assertSame(['my-file.txt', 'my-dir/'], $config->getManagedFiles());
         static::assertSame('My before message', $config->getReleaseCommitMessage());
-        static::assertSame('My after message', $config->getAfterReleaseCommitMessage());
+        static::assertSame('My after message', $config->getRollbackCommitMessage());
     }
 
     public function testLoadConfigWithMissingFileThrowsException(): void

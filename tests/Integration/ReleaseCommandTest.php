@@ -200,10 +200,8 @@ class ReleaseCommandTest extends TestCase
             <?php
 
             return [
-                'git' => [
-                    'commit_messages' => [
-                        'release' => 'chore: configured release message',
-                    ],
+                'release' => [
+                    'commit_message' => 'chore: configured release message',
                 ],
             ];
             PHP);
@@ -313,20 +311,20 @@ class ReleaseCommandTest extends TestCase
 
             return [
                 'release' => [
-                    'managed_files' => [
+                    'files' => [
                         'README.md',
                         'scripts/',
                     ],
                 ],
             ];
             PHP);
-        exec('git add custom-config.php && git commit -m "Add custom managed_files configuration"');
+        exec('git add custom-config.php && git commit -m "Add custom files configuration"');
 
         mkdir('scripts');
         file_put_contents('scripts/build.sh', 'build content');
         exec('git add scripts/build.sh');
         exec('git commit -m "Add script"');
-        
+
         file_put_contents('README.md', 'some readme content');
         exec('git add README.md');
         exec('git commit -m "Add README"');
@@ -382,10 +380,8 @@ class ReleaseCommandTest extends TestCase
             <?php
 
             return [
-                'git' => [
-                    'commit_messages' => [
-                        'release' => 'chore(release): release {{version}}',
-                    ],
+                'release' => [
+                    'commit_message' => 'chore(release): release {{version}}',
                 ],
             ];
             PHP);
@@ -393,9 +389,7 @@ class ReleaseCommandTest extends TestCase
 
         TestCommand::for(new PeelCommand())->execute()->assertSuccessful();
 
-        TestCommand::for(new ReleaseCommand())->execute(
-            'v1.0.0 --config=custom-config.php',
-        )->assertSuccessful();
+        TestCommand::for(new ReleaseCommand())->execute('v1.0.0 --config=custom-config.php')->assertSuccessful();
 
         exec('git log -1 --pretty=%s', $logOutput);
         static::assertSame(['chore(release): release v1.0.0'], $logOutput);

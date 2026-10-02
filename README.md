@@ -297,16 +297,14 @@ return [
             'enabled' => true,
             'path' => '.composer-unpeeled.json',
         ],
-        'managed_files' => [
+        'files' => [
             'CHANGELOG.md',
             'bin/',
         ],
+        'commit_message' => 'chore: release version {{version}}',
     ],
-    'git' => [
-        'commit_messages' => [
-            'release' => 'chore: release version {{version}}',
-            'after_release' => 'chore: restore development Composer manifest',
-        ],
+    'rollback' => [
+        'commit_message' => 'chore: restore development Composer manifest',
     ],
 ];
 ```
@@ -359,17 +357,17 @@ Make sure the backup file is not unintentionally included in the release.
 The automated release workflow uses configurable commit messages:
 
 ```php
-'git' => [
-    'commit_messages' => [
-        'release' => 'chore: release version {{version}}',
-        'after_release' => 'chore: restore development Composer manifest',
-    ],
+'release' => [
+    'commit_message' => 'chore: release version {{version}}',
+],
+'rollback' => [
+    'commit_message' => 'chore: restore development Composer manifest',
 ],
 ```
 
-`release` is used for the commit containing the peeled manifest.
+`release.commit_message` is used for the commit containing the peeled manifest.
 
-`after_release` is used by `rollback --commit` for the commit restoring the original development manifest.
+`rollback.commit_message` is used by `rollback --commit` for the commit restoring the original development manifest.
 
 Both messages can be overwritten per invocation via the `--commit-message` option of the `release` and
 `rollback --commit` commands.
@@ -402,7 +400,9 @@ The workflow is:
 The `release` command requires a clean working tree. By default, the only allowed changes are the peeled `composer.json`, the
 backup file created by `peel`, the `CHANGELOG.md` file, and any modified files in the `bin/` directory.
 
-You can override which files are allowed to be modified and committed during the release by adding a `managed_files` array to the `release` section in your `.composer-peel.php`. This will replace the default `CHANGELOG.md` and `bin/` allowances. Directories should end with a trailing slash (`/`).
+You can override which files are allowed to be modified and committed during the release by adding a `files` array to
+the `release` section in your `.composer-peel.php`. This will replace the default `CHANGELOG.md` and `bin/` allowances.
+Directories should end with a trailing slash (`/`).
 
 Before committing, the `release` command also verifies that `composer.json` is exactly the backup file without the
 configured sections. The release is aborted without creating a commit or tag if the backup file is missing, if

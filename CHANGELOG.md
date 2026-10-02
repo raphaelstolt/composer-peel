@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+### Changed
+- The configuration structure has been flattened. `release.managed_files` is now `release.files`,
+`git.commit_messages.release` is now `release.commit_message`, and `git.commit_messages.after_release` is now
+`rollback.commit_message`. The `git` section has been removed.
+
 ## [v3.0.0] - 2026-10-02
 
 ### Changed

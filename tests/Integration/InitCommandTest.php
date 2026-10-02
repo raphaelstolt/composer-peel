@@ -52,9 +52,12 @@ class InitCommandTest extends TestCase
         static::assertArrayHasKey('backup', $configArray['release']);
         static::assertTrue($configArray['release']['backup']['enabled']);
         static::assertSame('.composer-unpeeled.json', $configArray['release']['backup']['path']);
-        static::assertArrayHasKey('managed_files', $configArray['release']);
-        static::assertContains('CHANGELOG.md', $configArray['release']['managed_files']);
-        static::assertContains('bin/', $configArray['release']['managed_files']);
+        static::assertArrayHasKey('files', $configArray['release']);
+        static::assertContains('CHANGELOG.md', $configArray['release']['files']);
+        static::assertContains('bin/', $configArray['release']['files']);
+        static::assertSame('chore: release version {{version}}', $configArray['release']['commit_message']);
+        static::assertArrayHasKey('rollback', $configArray);
+        static::assertSame('chore: restore development Composer manifest', $configArray['rollback']['commit_message']);
     }
 
     public function testExecuteFailsIfConfigurationFileExists(): void

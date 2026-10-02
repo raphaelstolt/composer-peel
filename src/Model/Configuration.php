@@ -47,7 +47,7 @@ final class Configuration
     private bool $backupEnabled = true;
     private string $backupPath = '.composer-unpeeled.json';
     private string $releaseCommitMessage = 'chore: release version {{version}}';
-    private string $afterReleaseCommitMessage = 'chore: restore development Composer manifest';
+    private string $rollbackCommitMessage = 'chore: restore development Composer manifest';
 
     /** @var array<int, string> */
     private array $managedFiles = [
@@ -109,14 +109,14 @@ final class Configuration
         $this->releaseCommitMessage = $releaseCommitMessage;
     }
 
-    public function getAfterReleaseCommitMessage(): string
+    public function getRollbackCommitMessage(): string
     {
-        return $this->afterReleaseCommitMessage;
+        return $this->rollbackCommitMessage;
     }
 
-    public function setAfterReleaseCommitMessage(string $afterReleaseCommitMessage): void
+    public function setRollbackCommitMessage(string $rollbackCommitMessage): void
     {
-        $this->afterReleaseCommitMessage = $afterReleaseCommitMessage;
+        $this->rollbackCommitMessage = $rollbackCommitMessage;
     }
 
     /**

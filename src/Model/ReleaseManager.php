@@ -32,11 +32,7 @@ class ReleaseManager
         $commitMessage = str_replace('{{version}}', $tag, $this->configuration->getReleaseCommitMessage());
 
         if ($isDryRun) {
-            return new ReleaseDryRunResult(
-                $filesToCommit,
-                $commitMessage,
-                $tag,
-            );
+            return new ReleaseDryRunResult($filesToCommit, $commitMessage, $tag);
         }
 
         $this->executeGitCommand(array_merge(['git', 'add'], $filesToCommit));
@@ -65,10 +61,10 @@ class ReleaseManager
             throw new RuntimeException('The composer-peel release workflow requires a clean working tree.');
         }
 
-        $allowedPaths = array_merge(
-            ['composer.json', $this->configuration->getBackupPath()],
-            $this->configuration->getManagedFiles()
-        );
+        $allowedPaths = array_merge([
+            'composer.json',
+            $this->configuration->getBackupPath(),
+        ], $this->configuration->getManagedFiles());
         $filesToCommit = ['composer.json'];
 
         foreach ($output as $line) {
@@ -76,7 +72,10 @@ class ReleaseManager
 
             $isAllowed = false;
             foreach ($allowedPaths as $allowedPath) {
-                if ($path === $allowedPath || (str_ends_with($allowedPath, '/') && str_starts_with($path, $allowedPath))) {
+                if (
+                    $path === $allowedPath
+                    || str_ends_with($allowedPath, '/') && str_starts_with($path, $allowedPath)
+                ) {
                     $isAllowed = true;
                     break;
                 }
@@ -154,6 +153,6 @@ class ReleaseManager
         $this->verifyGitIsAvailable();
 
         $this->executeGitCommand(['git', 'add', 'composer.json']);
-        $this->executeGitCommand(['git', 'commit', '-m', $this->configuration->getAfterReleaseCommitMessage()]);
+        $this->executeGitCommand(['git', 'commit', '-m', $this->configuration->getRollbackCommitMessage()]);
     }
 }
