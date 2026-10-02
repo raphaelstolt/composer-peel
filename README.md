@@ -239,7 +239,7 @@ composer-peel rollback --keep-backup
 ```
 
 To commit the restored `composer.json` to Git right away, use the `--commit` option. The commit uses the configured
-`after_tag` [commit message](#git-commit-messages):
+`rollback.commit_message` [commit message](#git-commit-messages):
 
 ```bash
 composer-peel rollback --commit
