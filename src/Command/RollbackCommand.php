@@ -51,6 +51,13 @@ class RollbackCommand extends Command
             'Restore the backup even if composer.json has been modified since it was peeled',
         );
 
+        $this->addOption(
+            'dry-run',
+            null,
+            InputOption::VALUE_NONE,
+            'Preview the rollback operation without modifying files or Git',
+        );
+
         $this->addOption('backup-file', null, InputOption::VALUE_REQUIRED, 'Name of the composer.json backup file');
         $this->addOption('config', null, InputOption::VALUE_REQUIRED, 'Path to the configuration file');
     }
@@ -122,6 +129,12 @@ class RollbackCommand extends Command
             return Command::FAILURE;
         }
 
+        if ($input->getOption('dry-run') === true) {
+            $this->renderDryRun($input, $output, $manifestState, $backupPath, $configuration);
+
+            return Command::SUCCESS;
+        }
+
         if ($manifestState === ManifestComparator::RESTORED) {
             $output->writeln('composer.json already matches ' . basename($backupPath) . '.');
         } else {
@@ -160,6 +173,32 @@ class RollbackCommand extends Command
         $output->writeln('Backup kept.');
 
         return Command::SUCCESS;
+    }
+
+    private function renderDryRun(
+        InputInterface $input,
+        OutputInterface $output,
+        string $manifestState,
+        string $backupPath,
+        Configuration $configuration,
+    ): void {
+        $backupName = basename($backupPath);
+
+        $output->writeln(
+            $manifestState === ManifestComparator::RESTORED
+                ? "composer.json already matches {$backupName}."
+                : "<info>Restore:</info> composer.json from {$backupName}",
+        );
+
+        if ($input->getOption('commit')) {
+            $output->writeln('<info>Commit:</info> ' . $configuration->getRollbackCommitMessage());
+        }
+
+        $backupAction = $input->getOption('keep-backup') ? 'kept' : 'removed';
+        $output->writeln("<info>Backup:</info> {$backupName} would be {$backupAction}");
+
+        $output->writeln('');
+        $output->writeln('Dry run completed. No files were modified.');
     }
 
     /**

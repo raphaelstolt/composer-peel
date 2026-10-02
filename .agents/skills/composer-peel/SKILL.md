@@ -150,6 +150,12 @@ This restores `composer.json` from the backup file configured in `.composer-peel
 
 The rollback is aborted if `composer.json` has been modified since it was peeled, as restoring would discard these changes. Do not use `--force` to override this unless the user confirms that the changes to `composer.json` can be discarded.
 
+To preview the rollback without modifying `composer.json`, the backup file, or Git:
+
+```bash
+vendor/bin/composer-peel rollback --dry-run
+```
+
 To preserve the backup file after restoration:
 
 ```bash

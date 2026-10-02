@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+### Added
+- New `--dry-run` option for the `rollback` command.
+
 ## [v4.0.0] - 2026-10-02
 
 ### Changed

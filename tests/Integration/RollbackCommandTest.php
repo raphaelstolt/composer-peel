@@ -379,6 +379,75 @@ class RollbackCommandTest extends TestCase
         static::assertFileExists('.composer-unpeeled.json');
     }
 
+    public function testExecuteRollbackDryRunDoesNotModifyFiles(): void
+    {
+        $backupManifest = ['name' => 'test/package', 'require-dev' => ['phpunit/phpunit' => '^10.0']];
+        $peeledManifest = ['name' => 'test/package'];
+
+        file_put_contents('.composer-unpeeled.json', (string) json_encode($backupManifest));
+        file_put_contents('composer.json', (string) json_encode($peeledManifest));
+
+        TestCommand::for(new RollbackCommand())
+            ->execute('--dry-run')
+            ->assertSuccessful()
+            ->assertOutputContains('Restore: composer.json from .composer-unpeeled.json')
+            ->assertOutputContains('Backup: .composer-unpeeled.json would be removed')
+            ->assertOutputNotContains('Commit:')
+            ->assertOutputContains('Dry run completed. No files were modified.');
+
+        static::assertSame((string) json_encode($peeledManifest), file_get_contents('composer.json'));
+        static::assertFileExists('.composer-unpeeled.json');
+    }
+
+    public function testExecuteRollbackDryRunWithCommitDoesNotCommit(): void
+    {
+        $this->initGitRepositoryWithPeeledManifest();
+
+        TestCommand::for(new RollbackCommand())
+            ->execute('--dry-run --commit --keep-backup --commit-message="chore: back to development"')
+            ->assertSuccessful()
+            ->assertOutputContains('Restore: composer.json from .composer-unpeeled.json')
+            ->assertOutputContains('Commit: chore: back to development')
+            ->assertOutputContains('Backup: .composer-unpeeled.json would be kept')
+            ->assertOutputContains('Dry run completed. No files were modified.');
+
+        exec('git log -1 --pretty=%s', $logOutput);
+        static::assertSame(['chore(dist): prepare Composer manifest for release'], $logOutput);
+        static::assertFileExists('.composer-unpeeled.json');
+    }
+
+    public function testExecuteRollbackDryRunReportsAlreadyRestoredManifest(): void
+    {
+        $backupManifest = ['name' => 'test/package', 'require-dev' => ['phpunit/phpunit' => '^10.0']];
+
+        file_put_contents('.composer-unpeeled.json', (string) json_encode($backupManifest));
+        file_put_contents('composer.json', (string) json_encode($backupManifest));
+
+        TestCommand::for(new RollbackCommand())
+            ->execute('--dry-run')
+            ->assertSuccessful()
+            ->assertOutputContains('composer.json already matches .composer-unpeeled.json.')
+            ->assertOutputNotContains('Restore:');
+
+        static::assertFileExists('.composer-unpeeled.json');
+    }
+
+    public function testExecuteRollbackDryRunFailsIfManifestWasModifiedSincePeeling(): void
+    {
+        $backupManifest = ['name' => 'test/package', 'require-dev' => ['phpunit/phpunit' => '^10.0']];
+        $modifiedManifest = ['name' => 'test/package', 'description' => 'Changed after peeling'];
+
+        file_put_contents('.composer-unpeeled.json', (string) json_encode($backupManifest));
+        file_put_contents('composer.json', (string) json_encode($modifiedManifest));
+
+        TestCommand::for(new RollbackCommand())
+            ->execute('--dry-run')
+            ->assertStatusCode(1)
+            ->assertOutputContains('composer.json has been modified since it was peeled.');
+
+        static::assertFileExists('.composer-unpeeled.json');
+    }
+
     private function initGitRepositoryWithPeeledManifest(): void
     {
         $backupManifest = ['name' => 'test/package', 'require-dev' => ['phpunit/phpunit' => '^10.0']];

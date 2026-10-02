@@ -265,6 +265,15 @@ composer-peel rollback --force
 
 If `composer.json` already matches the backup, it is left untouched.
 
+To preview whether `composer.json` would be restored, which commit message would be used, and whether the backup file
+would be removed, use the `--dry-run` option. It runs the same checks as a real rollback but does not modify any files
+or create a commit:
+
+```bash
+composer-peel rollback --dry-run
+composer-peel rollback --commit --dry-run
+```
+
 You can also specify a custom backup file or configuration file during rollback:
 
 ```bash
