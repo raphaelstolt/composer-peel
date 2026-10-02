@@ -386,7 +386,7 @@ class RollbackCommandTest extends TestCase
 
         file_put_contents('composer.json', (string) json_encode($peeledManifest));
 
-        exec('git init');
+        exec('git init --initial-branch=main');
         exec('git config user.name "Test User"');
         exec('git config user.email "test@example.com"');
         exec('git add composer.json');

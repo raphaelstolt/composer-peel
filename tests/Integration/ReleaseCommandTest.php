@@ -30,7 +30,7 @@ class ReleaseCommandTest extends TestCase
 
         copy(from: $this->originalDir . '/tests/fixtures/composer.json', to: 'composer.json');
 
-        exec('git init');
+        exec('git init --initial-branch=main');
         exec('git config user.name "Test User"');
         exec('git config user.email "test@example.com"');
         exec('git add composer.json');

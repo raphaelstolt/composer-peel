@@ -24,7 +24,7 @@ class VersionProgressionValidatorTest extends TestCase
         mkdir($this->testDir);
         chdir($this->testDir);
 
-        exec('git init');
+        exec('git init --initial-branch=main');
         exec('git config user.name "Test User"');
         exec('git config user.email "test@example.com"');
         file_put_contents('test.txt', 'test');

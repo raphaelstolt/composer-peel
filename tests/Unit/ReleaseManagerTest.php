@@ -16,7 +16,7 @@ class ReleaseManagerTest extends TestCase
         $config = new Configuration();
         $config->setBackupEnabled(false);
 
-        $validator = $this->createMock(\Stolt\ComposerPeel\Model\ReleaseVersionValidator::class);
+        $validator = $this->createStub(\Stolt\ComposerPeel\Model\ReleaseVersionValidator::class);
         $manager = new ReleaseManager($config, $validator);
 
         $this->expectException(RuntimeException::class);
