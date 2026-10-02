@@ -5,7 +5,7 @@
 ![Downloads](https://img.shields.io/packagist/dt/stolt/composer-peel)
 ![PHP Version](https://img.shields.io/badge/php-8.2+-ff69b4.svg)
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-![Ai skill available](https://img.shields.io/badge/ai%20skill-available-f54927.svg?style=flat)
+![AI skill available](https://img.shields.io/badge/ai%20skill-available-f54927.svg?style=flat)
 [![PDS Skeleton](https://img.shields.io/badge/pds-skeleton-blue.svg?style=flat)](https://github.com/php-pds/skeleton)
 [![Lean dist package](https://img.shields.io/badge/lean-dist%20package-00ffb6.svg?style=flat)](https://github.com/raphaelstolt/lean-package-validator)
 
@@ -15,38 +15,37 @@
          alt="Composer metadata peeler logo">
 </p>
 
-A small PHP development tool for removing configurable development-only metadata from `composer.json` files when releasing
-packages for distribution.
+A small PHP development tool for removing configurable development-only metadata from `composer.json` files when
+releasing packages for distribution.
 
 ## Why?
 
 A package's `composer.json` often contains metadata that is useful while developing and maintaining the package, but is
 not needed by downstream consumers.
 
-For example, development dependencies, development autoloading, and Composer scripts can make up a significant part of a
-project's development manifest.
+For example, development dependencies, development autoloading, and Composer scripts can make up a significant part of
+a project's development manifest.
 
 `composer-peel` lets you explicitly define which Composer sections should be removed from a release manifest.
 
-The goal is simple:
-
-> Keep the release package manifest i.e. `composer.json` focused on what consumers need and leave development metadata behind.
+> Keep the release package manifest focused on what consumers need and leave development metadata behind.
 
 ## What gets peeled?
 
-The sections removed by `composer-peel` are configurable. These are removed from the package's published composer.json;
-they are not removed from the source repository's development configuration permanently. Runtime dependencies and package
-autoloading remain untouched.
+The sections removed by `composer-peel` are configurable. They are removed from the release `composer.json`; they are
+not permanently removed from the source repository's development configuration.
 
-The default configuration includes the following sections:
+The default configuration removes:
 
-| Section        | Purpose                                         |
-| -------------- | ----------------------------------------------- |
-| `require-dev`  | Development-only dependencies                   |
-| `autoload-dev` | Development-only autoloading                    |
-| `scripts`      | Composer scripts used during development and CI |
-| `scripts-descriptions` | Composer scripts descriptions           |
-| `scripts-aliases` | Composer scripts aliases                     |
+| Section | Purpose |
+| --- | --- |
+| `require-dev` | Development-only dependencies |
+| `autoload-dev` | Development-only autoloading |
+| `scripts` | Composer scripts used during development and CI |
+| `scripts-descriptions` | Composer script descriptions |
+| `scripts-aliases` | Composer script aliases |
+
+Runtime dependencies and package autoloading remain untouched.
 
 ## Installation
 
@@ -58,7 +57,9 @@ composer require --dev stolt/composer-peel
 
 ## Usage
 
-Peel the current `composer.json`:
+### Peel
+
+Remove the configured sections from the current `composer.json`:
 
 ```bash
 composer-peel peel
@@ -76,47 +77,42 @@ Use a custom configuration:
 composer-peel peel --config=.composer-peel.php
 ```
 
-A backup can also be created before the manifest is modified:
+Create a backup before modifying the manifest:
 
 ```bash
 composer-peel peel --backup-file=.composer-unpeeled.json
 ```
 
-The `init` command is useful when you want to make the peeling policy explicit and version-controlled
-in your repository. It generates a configuration file from the current internal defaults, which you can then customise.
+### Initialize configuration
+
+The `init` command generates a `.composer-peel.php` file from the current internal defaults. This is useful when you
+want the peeling policy to be explicit and version-controlled:
 
 ```bash
 composer-peel init
 ```
 
-By default, the `init` command will not overwrite an existing configuration file. If you want to overwrite it, use the
-`--overwrite` option:
+An existing configuration is not overwritten by default:
 
 ```bash
 composer-peel init --overwrite
 ```
 
-## Previewing changes with `--dry-run`
+### Preview changes
 
-Use `--dry-run` to inspect what `composer-peel` would remove without modifying `composer.json`.
+The `--dry-run` option shows:
 
-```bash
-composer-peel peel --dry-run
-```
+- the manifest being processed;
+- the configuration being used;
+- the sections that would be removed;
+- the original manifest size;
+- the projected manifest size;
+- the estimated size reduction.
 
-The dry run shows:
-
-* the manifest being processed,
-* the configuration being used,
-* the sections that would be removed,
-* the original manifest size,
-* the projected manifest size,
-* the estimated size reduction.
-
-With the default configuration:
+For example:
 
 ```text
-$ composer-peel --dry-run
+$ composer-peel peel --dry-run
 
 Manifest:      composer.json
 Configuration: internal defaults
@@ -135,45 +131,26 @@ Estimated reduction: 1,360 bytes (54.8%)
 Dry run completed. No files were modified.
 ```
 
-The values above are illustrative. The actual result depends on the contents of your `composer.json` and the configured
+The values above are illustrative; the actual result depends on the contents of `composer.json` and the configured
 peeling rules.
 
-If you also want to see the exact structural changes, you can use the `--diff` option:
+To see the exact structural changes:
 
 ```bash
 composer-peel peel --dry-run --diff
 ```
 
-If you need the dry-run output in a machine-readable format, you can use the `--format=json` option:
+For machine-readable output:
 
 ```bash
 composer-peel peel --dry-run --format=json
 ```
 
-When both `--format=json` and `--diff` are used, the resulting JSON object will contain an additional `diff` key with
-the unified diff string.
+When `--format=json` and `--diff` are combined, the JSON output contains an additional `diff` key with the unified diff.
 
-```json
-{
-    "manifest": "composer.json",
-    "configuration": "internal defaults",
-    "removed_sections": [
-        "require-dev",
-        "autoload-dev",
-        "scripts",
-        "scripts-descriptions",
-        "scripts-aliases"
-    ],
-    "original_size_bytes": 2480,
-    "projected_size_bytes": 1120,
-    "reduction_bytes": 1360,
-    "reduction_percentage": 54.8
-}
-```
+## Validate the peeled manifest
 
-## Validating the peeled manifest
-
-Use the `validate` command to verify a peeled `composer.json` before releasing it:
+Use `validate` to verify the peeled `composer.json` before releasing it:
 
 ```bash
 composer-peel validate
@@ -181,83 +158,70 @@ composer-peel validate
 
 The following checks are performed:
 
-* `composer.json` contains a valid JSON object,
-* the backup file exists when backups are enabled,
-* the backup file contains a valid JSON object,
-* none of the configured sections is still present in `composer.json`,
-* the required runtime sections `name` and `require` still exist,
-* all other sections are unchanged compared to the backup,
-* `composer validate --no-check-lock` reports no errors for `composer.json` and the backup file.
+- `composer.json` contains a valid JSON object;
+- the backup file exists when backups are enabled;
+- the backup file contains a valid JSON object;
+- none of the configured sections is still present in `composer.json`;
+- the required runtime sections `name` and `require` still exist;
+- all other sections are unchanged compared with the backup;
+- `composer validate --no-check-lock` reports no errors for `composer.json` and the backup.
 
-```text
-$ composer-peel validate
+The command exits with a non-zero status code if a check fails, making it suitable for CI. Checks that depend on the
+backup are skipped when backups are disabled.
 
-[PASS] composer.json contains valid JSON
-[PASS] Backup .composer-unpeeled.json exists
-[PASS] Backup .composer-unpeeled.json contains valid JSON
-[PASS] Configured sections are absent
-[PASS] Required runtime sections exist
-[PASS] Runtime sections match the backup
-[PASS] composer validate reports no errors for composer.json
-[PASS] composer validate reports no errors for .composer-unpeeled.json
+The Composer validation checks require the `composer` binary to be available on `PATH`. Warnings do not fail validation,
+but errors — including publish errors such as a missing `description` — do.
 
-Peeled composer.json validated successfully.
-```
+The lock file is not checked because it is expected to retain the development dependencies removed from the release
+manifest.
 
-The command exits with a non-zero status code if any check fails, which makes it usable in CI. Checks depending on
-the backup are skipped when backups are disabled via the configuration.
-
-The `composer validate` checks require the `composer` binary to be available on the `PATH`. Warnings do not fail the
-validation, but errors, including publish errors like a missing `description`, do. The lock file is not checked,
-because it is expected to still contain the peeled development dependencies. To skip these checks, use the
-`--skip-composer-validate` option:
+To skip the Composer validation checks:
 
 ```bash
 composer-peel validate --skip-composer-validate
 ```
 
-A custom backup file or configuration file can be specified as well:
+A custom backup or configuration file can also be specified:
 
 ```bash
 composer-peel validate --backup-file=my-backup.json --config=.composer-peel.php
 ```
 
-## Rolling back changes
+## Roll back changes
 
-If a backup file was created during the `peel` process, you can restore `composer.json` to its original state using
-the `rollback` command.
+When `peel` has created a backup, `rollback` restores the original `composer.json`:
 
 ```bash
 composer-peel rollback
 ```
 
-By default, the `rollback` command will delete the backup file after successfully restoring the manifest. If you want
-to keep the backup file, use the `--keep-backup` option:
+By default, the backup file is deleted after a successful rollback. Keep it with:
 
 ```bash
 composer-peel rollback --keep-backup
 ```
 
-To commit the restored `composer.json` to Git right away, use the `--commit` option. The commit uses the configured
-`rollback.commit_message` [commit message](#git-commit-messages):
+Restore and commit the development manifest immediately:
 
 ```bash
 composer-peel rollback --commit
 ```
 
-To overwrite the default or configured commit message, use the `--commit-message` option. It requires the `--commit`
-option:
+The commit uses the configured rollback commit message. Override it for a single invocation with:
 
 ```bash
 composer-peel rollback --commit --commit-message="chore: start next development cycle"
 ```
 
-The `--commit` option can be combined with `--keep-backup`. If the commit fails, e.g. because the current directory is
-not a Git repository, the command exits with an error and the backup file is kept.
+`--commit-message` requires `--commit`.
 
-Before restoring, the `rollback` command verifies that `composer.json` still is the peeled version of the backup, i.e.
-the backup without the configured sections. If `composer.json` has been modified since it was peeled, the rollback is
-aborted, as restoring the backup would discard these changes. To restore the backup anyway, use the `--force` option:
+The `--commit` option can be combined with `--keep-backup`. If committing fails, the command exits with an error and
+keeps the backup so the rollback can be retried.
+
+Before restoring, `rollback` verifies that `composer.json` is still the peeled version of the backup. If the manifest
+has been modified since it was peeled, the rollback is aborted to avoid discarding those changes.
+
+To restore the backup anyway:
 
 ```bash
 composer-peel rollback --force
@@ -265,16 +229,14 @@ composer-peel rollback --force
 
 If `composer.json` already matches the backup, it is left untouched.
 
-To preview whether `composer.json` would be restored, which commit message would be used, and whether the backup file
-would be removed, use the `--dry-run` option. It runs the same checks as a real rollback but does not modify any files
-or create a commit:
+Use `--dry-run` to preview the rollback checks, the commit message, and whether the backup would be removed:
 
 ```bash
 composer-peel rollback --dry-run
 composer-peel rollback --commit --dry-run
 ```
 
-You can also specify a custom backup file or configuration file during rollback:
+Custom backup and configuration files can also be supplied:
 
 ```bash
 composer-peel rollback --backup-file=my-backup.json --config=.composer-peel.php
@@ -284,7 +246,12 @@ composer-peel rollback --backup-file=my-backup.json --config=.composer-peel.php
 
 `composer-peel` supports an optional PHP configuration file named `.composer-peel.php` in the project root.
 
-A configuration can define which Composer sections are peeled, as well as release backup and Git commit behaviour:
+The configuration can define:
+
+- which Composer sections are peeled;
+- the release backup;
+- which files may be included in a release commit;
+- release and rollback commit messages.
 
 ```php
 <?php
@@ -301,6 +268,7 @@ return [
             'scripts-aliases',
         ],
     ],
+
     'release' => [
         'backup' => [
             'enabled' => true,
@@ -312,6 +280,7 @@ return [
         ],
         'commit_message' => 'chore: release version {{version}}',
     ],
+
     'rollback' => [
         'commit_message' => 'chore: restore development Composer manifest',
     ],
@@ -320,7 +289,7 @@ return [
 
 ### Peel sections
 
-The `peel.sections` option defines the top-level Composer sections that should be removed:
+`peel.sections` defines the top-level Composer sections that should be removed:
 
 ```php
 'peel' => [
@@ -334,15 +303,12 @@ The `peel.sections` option defines the top-level Composer sections that should b
 ],
 ```
 
-Only explicitly configured sections are peeled.
-
-This makes the behaviour predictable and allows each package to decide which metadata belongs exclusively to its
-development workflow.
+Only explicitly configured sections are peeled. This makes the behavior predictable and lets each package decide which
+metadata belongs exclusively to its development workflow.
 
 > [!NOTE]
->
-> `composer-peel` only permits stripping development-oriented metadata. Attempting to configure protected sections
-> such as `require` or `autoload` will cause the operation to fail with an error.
+> `composer-peel` only permits stripping development-oriented metadata. Attempting to configure protected 
+> sections such as `require` or `autoload` causes the operation to fail.
 
 ### Release backup
 
@@ -357,35 +323,54 @@ The release backup stores the original `composer.json` before it is peeled:
 ],
 ```
 
-The backup provides a recovery point if the release process fails before the original manifest is restored.
+The backup provides the source for restoring the development manifest if the release process fails before restoration.
 
 Make sure the backup file is not unintentionally included in the release.
 
+### Release files
+
+By default, the release workflow allows the peeled `composer.json`, the backup, `CHANGELOG.md`, and modified files in
+`bin/` to be committed.
+
+The default `CHANGELOG.md` and `bin/` allowances can be replaced through `release.files`:
+
+```php
+'release' => [
+    'files' => [
+        'CHANGELOG.md',
+        'bin/',
+    ],
+],
+```
+
+Directories must end with `/`.
+
 ### Git commit messages
 
-The automated release workflow uses configurable commit messages:
+The release workflow uses separate commit messages for the peeled release manifest and the restored development manifest:
 
 ```php
 'release' => [
     'commit_message' => 'chore: release version {{version}}',
 ],
+
 'rollback' => [
     'commit_message' => 'chore: restore development Composer manifest',
 ],
 ```
 
-`release.commit_message` is used for the commit containing the peeled manifest.
+`release.commit_message` is used for the commit containing the peeled manifest. The `{{version}}` placeholder is
+replaced with the release tag.
 
-`rollback.commit_message` is used by `rollback --commit` for the commit restoring the original development manifest.
+`rollback.commit_message` is used by `rollback --commit` when restoring the development manifest.
 
-Both messages can be overwritten per invocation via the `--commit-message` option of the `release` and
-`rollback --commit` commands.
+Both can be overridden for an individual invocation with `--commit-message`.
 
-### Release workflow
+## Release workflow
 
-Use the `release` command to commit and tag an **already peeled** `composer.json`.
+The `release` command commits and tags an __already peeled__ `composer.json`. It does not peel the manifest itself.
 
-The `release` command does not peel the manifest itself. Run `peel`, and optionally `validate`, first:
+A complete release workflow is:
 
 ```bash
 composer-peel peel
@@ -394,46 +379,44 @@ composer-peel release v1.0.0
 composer-peel rollback --commit
 ```
 
-The `release` command validates the requested tag before proceeding. It requires that:
-- the tag is a valid Semantic Version (e.g. `v1.0.0`),
-- the tag does not already exist,
-- the tag is strictly greater than the latest released version.
-
 The workflow is:
 
-1. Run `peel` to remove the configured development-only sections from `composer.json`.
+1. Run `peel` to remove the configured development-only sections and create the backup.
 2. Optionally run `validate` to inspect the peeled manifest independently.
 3. Run `release` to commit the peeled manifest and create the Git tag.
-4. Run `rollback --commit` to restore the original development `composer.json` and commit the changes.
+4. Run `rollback --commit` to restore the original development `composer.json` and commit the restoration.
 
-The `release` command requires a clean working tree. By default, the only allowed changes are the peeled `composer.json`, the
-backup file created by `peel`, the `CHANGELOG.md` file, and any modified files in the `bin/` directory.
+### Release validation
 
-You can override which files are allowed to be modified and committed during the release by adding a `files` array to
-the `release` section in your `.composer-peel.php`. This will replace the default `CHANGELOG.md` and `bin/` allowances.
-Directories should end with a trailing slash (`/`).
+Before proceeding, `release` verifies that:
 
-Before committing, the `release` command also verifies that `composer.json` is exactly the backup file without the
-configured sections. The release is aborted without creating a commit or tag if the backup file is missing, if
-`composer.json` has not been peeled, or if it has been modified after peeling. In the latter case, run `rollback` and
-`peel` again. For the full set of checks, including `composer validate`, use the
-[`validate`](#validating-the-peeled-manifest) command.
+- the requested tag is a valid Semantic Version, such as `v1.0.0`;
+- the tag does not already exist;
+- the tag is strictly greater than the latest released version;
+- the working tree is in the expected release state;
+- the backup exists;
+- `composer.json` is exactly the backup with the configured sections removed;
+- only allowed files have changed.
 
-The commit messages used for the release workflow can be configured through `.composer-peel.php`. The `release` commit message can include a `{{version}}` placeholder which will be automatically replaced with the provided tag.
+By default, the allowed release changes are the peeled `composer.json`, the backup, `CHANGELOG.md`, and modified files
+in `bin/`.
 
-To overwrite the default or configured commit message for a single release, use the `--commit-message` option:
+If the release state is invalid, no commit or tag is created.
+
+To override the release commit message:
 
 ```bash
-composer-peel release v1.0.0 --commit-message="chore: release v1.0.0"
+composer-peel release v1.0.0 --commit-message="chore: release {{version}}"
 ```
 
-To preview the files that would be committed and the commit message and tag that would be created, use the `--dry-run` option:
+To preview the files, commit message, and tag without creating them:
 
 ```bash
 composer-peel release v1.0.0 --dry-run
 ```
 
-The resulting history looks like this:
+The release tag points to the commit containing the peeled manifest. After `rollback --commit`, the development branch
+contains the restored manifest:
 
 ```text
 Development commit
@@ -447,20 +430,14 @@ Peeled manifest commit
 Restored development manifest commit
 ```
 
-The release tag therefore points to the peeled manifest, while the development branch continues with the original
-manifest.
-
 > [!IMPORTANT]
+> The release tag points to a commit containing a different `composer.json` from the development branch.
 >
-> The release tag points to a commit containing a different `composer.json` than the development branch.
+> The automated release workflow only works when the peeled-manifest commit does not need to pass the project's normal 
+> development CI checks. After peeling, development dependencies, development autoloading, and Composer scripts are no 
+> longer available.
 >
-> The automated release workflow only works when the peeled-manifest commit does not need to pass the project's normal
-> development CI checks.
->
-> After peeling, development dependencies, development autoloading, and Composer scripts may no longer be available. CI
-> jobs that depend on them can therefore fail.
->
-> If your release process requires CI validation of the tagged commit, consider using `composer-peel` as a separate
+> If your release process requires CI validation of the tagged commit, consider using `composer-peel` as a separate 
 > distribution/build step instead of tagging the peeled manifest directly.
 
 ## Composer lock file
@@ -471,8 +448,8 @@ manifest.
 
 `composer-peel` includes a repository-local AI skill at `.agents/skills/composer-peel/SKILL.md`.
 
-The skill teaches compatible coding agents how to inspect the configuration, preview changes, peel
-the configured sections, and safely perform the release workflow.
+The skill teaches compatible coding agents how to inspect the configuration, preview changes, peel the configured
+sections, and safely perform the release workflow.
 
 ## License
 
@@ -480,9 +457,8 @@ This CLI and its library are licensed under the MIT license. Please see [LICENSE
 
 ## Changelog
 
-All noteworthy changes are documented in the [CHANGELOG.md](CHANGELOG.md).
+All noteworthy changes are documented in [CHANGELOG.md](CHANGELOG.md).
 
 ## Contributing
 
-If you're considering contributing to this project, have a look at this repository's [CONTRIBUTING.md](.github/CONTRIBUTING.md)
-for more advice.
+If you're considering contributing to this project, have a look at this repository's [CONTRIBUTING.md](.github/CONTRIBUTING.md) for more advice.
