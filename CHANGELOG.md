@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - The `status` command no longer reports a dirty working tree when only the composer-peel backup file or
 `composer.json` have changed.
 
+- The `status` command no longer reports a release as "not ready" when the latest Git tag is missing or doesn't
+match the application version, as the tag may not exist yet at pre-release time.
+
 ## [v4.2.0] - 2026-10-04
 
 ### Added

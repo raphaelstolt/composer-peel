@@ -44,7 +44,6 @@ class StatusChecker
         [$workingTreeClean, $workingTreeChanges] = $this->inspectWorkingTree();
 
         $this->collectAppVersionIssues($appVersionSources, $issues);
-        $this->collectGitTagIssues($canonicalAppVersion, $latestGitTag, $issues);
         $this->collectChangelogIssues($canonicalAppVersion, $changelogVersion, $issues);
         $this->collectWorkingTreeIssues($workingTreeClean, $workingTreeChanges, $issues);
 
@@ -360,27 +359,6 @@ class StatusChecker
         if (count($appVersionSources) === 0) {
             $issues[] = 'No supported application version source was found';
         }
-    }
-
-    /**
-     * @param array<int, string> $issues
-     */
-    private function collectGitTagIssues(?string $canonicalAppVersion, ?string $latestGitTag, array &$issues): void
-    {
-        if ($canonicalAppVersion === null || $latestGitTag === null) {
-            return;
-        }
-
-        $normalizedTag = ltrim($latestGitTag, 'v');
-        if ($normalizedTag === $canonicalAppVersion) {
-            return;
-        }
-
-        $issues[] = sprintf(
-            'Application version %s does not match the latest Git tag %s',
-            $canonicalAppVersion,
-            $latestGitTag,
-        );
     }
 
     /**

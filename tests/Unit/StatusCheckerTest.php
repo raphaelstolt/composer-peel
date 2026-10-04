@@ -393,7 +393,8 @@ class StatusCheckerTest extends TestCase
         $result = $this->checker()->check();
 
         static::assertSame('v1.3.0', $result->latestGitTag);
-        static::assertNotEmpty($result->issues);
+        // A mismatching Git tag should not produce issues, as the tag may not exist yet pre-release
+        static::assertEmpty($result->issues);
     }
 
     public function testNoGitTags(): void
@@ -412,6 +413,29 @@ class StatusCheckerTest extends TestCase
         $result = $this->checker()->check();
 
         static::assertNull($result->latestGitTag);
+    }
+
+    public function testMissingGitTagDoesNotAffectReleaseReadiness(): void
+    {
+        $this->writeComposerJson([
+            'name' => 'test/pkg',
+            'require' => ['php' => '>=8.2'],
+            'bin' => ['bin/tool'],
+        ]);
+
+        mkdir($this->testDir . '/bin', 0777, true);
+        file_put_contents($this->testDir . '/bin/tool', '<?php $v = "1.4.0";');
+
+        file_put_contents($this->testDir . '/CHANGELOG.md', "## [1.4.0] - 2025-01-01\n\n- New feature\n");
+
+        $this->initGit();
+        // No tag created — simulating pre-release state where the tag doesn't exist yet
+
+        $result = $this->checker()->check();
+
+        static::assertNull($result->latestGitTag);
+        static::assertSame(StatusResult::RELEASE_READY, $result->releaseState);
+        static::assertTrue($result->isReleaseReady());
     }
 
     // ─── CHANGELOG ─────────────────────────────────────────────────────────
