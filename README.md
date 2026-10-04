@@ -30,6 +30,10 @@ a project's development manifest.
 
 > Keep the release package manifest focused on what consumers need and leave development metadata behind.
 
+Removing `require-dev` from a release manifest does not imply lower package quality. Development dependencies describe
+how a package is __tested and maintained__, not what consumers need to run it. The complete development setup remains
+in the source repository; `composer-peel` simply keeps those development concerns out of the distributed package.
+
 ## What gets peeled?
 
 The sections removed by `composer-peel` are configurable. They are removed from the release `composer.json`; they are
