@@ -5,6 +5,7 @@ use Stolt\ComposerPeel\Command\InitCommand;
 use Stolt\ComposerPeel\Command\PeelCommand;
 use Stolt\ComposerPeel\Command\ReleaseCommand;
 use Stolt\ComposerPeel\Command\RollbackCommand;
+use Stolt\ComposerPeel\Command\StatusCommand;
 use Stolt\ComposerPeel\Command\ValidateCommand;
 use Symfony\Component\Console\Application;
 
@@ -38,6 +39,7 @@ $application->addCommand(new InitCommand());
 $application->addCommand(new PeelCommand());
 $application->addCommand(new ReleaseCommand());
 $application->addCommand(new RollbackCommand());
+$application->addCommand(new StatusCommand());
 $application->addCommand(new ValidateCommand());
 
 $application->run();

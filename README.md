@@ -161,6 +161,94 @@ composer-peel peel --dry-run --format=json
 
 When `--format=json` and `--diff` are combined, the JSON output contains an additional `diff` key with the unified diff.
 
+## Check status
+
+Use `status` to get a read-only overview of the current Composer Peel state and determine whether the
+repository is ready for the release workflow:
+
+```bash
+composer-peel status
+```
+
+The command inspects:
+
+- the current Composer manifest state (peeled, unpeeled, or modified);
+- whether a Composer backup exists;
+- the optional Composer package version (separate from the application version);
+- discovered application version sources and their consistency;
+- the latest Git tag;
+- the CHANGELOG version;
+- the working tree state;
+- overall release readiness.
+
+### Package version vs. application version
+
+The `status` command distinguishes between two version concepts:
+
+- __Package version__: the optional `version` field in `composer.json`. This is metadata for the Composer package
+  and is not used as an application version source.
+- __Application version__: discovered from supported source files such as `bin/` files, `src/Console/Application.php`,
+  `src/Application.php`, and `src/Server.php`. This follows the same detection rules as `version-aligner`.
+
+`composer.json` is never used as an application version source.
+
+### Example output
+
+For a healthy, release-ready state:
+
+```text
+Composer Peel status
+
+Composer manifest     peeled
+Backup                available
+
+Package version       1.4.0
+
+Application versions
+  bin/composer-peel              1.4.0
+  src/Console/Application.php    1.4.0
+
+Application version     1.4.0
+Version consistency     consistent
+Latest Git tag          v1.4.0
+CHANGELOG.md            1.4.0
+Working tree            clean
+Release state           ready
+```
+
+For an inconsistent state:
+
+```text
+Composer Peel status
+
+Composer manifest     peeled
+Backup                available
+
+Application versions
+  bin/composer-peel              1.3.0
+  src/Console/Application.php    1.4.0
+
+Application version     1.4.0
+Version consistency     inconsistent
+Latest Git tag          v1.3.0
+CHANGELOG.md            1.4.0
+Working tree            clean
+Release state           not ready
+
+Issues:
+  - bin/composer-peel contains version 1.3.0 but the other application version source contains 1.4.0
+  - Application version 1.4.0 does not match the latest Git tag v1.3.0
+```
+
+The command exits with `0` when the repository is release-ready, and with a non-zero exit code when issues are
+detected. It is safe to run repeatedly and does not modify any files, Git state, commits, or tags.
+
+A custom configuration file can be specified:
+
+```bash
+composer-peel status --config=.composer-peel.php
+```
+
 ## Validate the peeled manifest
 
 Use `validate` to verify the peeled `composer.json` before releasing it:
