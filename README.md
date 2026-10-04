@@ -47,6 +47,19 @@ The default configuration removes:
 
 Runtime dependencies and package autoloading remain untouched.
 
+## A real-world example
+
+Even widely used packages can carry significant development metadata into their published `composer.json`.
+
+For example, peeling the `require-dev` section from __`symfony/console` v8.1.8__ would reduce its manifest from
+__1,813 bytes to 1,170 bytes__ — a saving of __643 bytes (35.5%)__.
+
+With more than __1.2 billion installations__, that amounts to a theoretical cumulative saving of approximately
+__782 GB of Composer metadata__.
+
+The example illustrates the principle behind `composer-peel`: small savings in a package manifest can become
+significant at scale.
+
 ## Installation
 
 Install `composer-peel` as a development dependency:
