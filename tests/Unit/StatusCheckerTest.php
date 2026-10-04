@@ -512,6 +512,62 @@ class StatusCheckerTest extends TestCase
         static::assertNotEmpty($result->workingTreeChanges);
     }
 
+    public function testBackupFileDoesNotDirtyWorkingTree(): void
+    {
+        $this->writeComposerJson([
+            'name' => 'test/pkg',
+            'require' => ['php' => '>=8.2'],
+            'bin' => ['bin/tool'],
+        ]);
+
+        mkdir($this->testDir . '/bin', 0777, true);
+        file_put_contents($this->testDir . '/bin/tool', '<?php $v = "1.4.0";');
+
+        $this->initGit();
+
+        // Create a backup file after git commit — it should not dirty the working tree
+        file_put_contents(
+            $this->testDir . '/.composer-unpeeled.json',
+            (string) json_encode([
+                'name' => 'test/pkg',
+                'require' => ['php' => '>=8.2'],
+                'require-dev' => ['phpunit/phpunit' => '^10'],
+                'scripts' => ['test' => 'phpunit'],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n",
+        );
+
+        $result = $this->checker()->check();
+
+        static::assertTrue($result->workingTreeClean);
+        static::assertEmpty($result->workingTreeChanges);
+    }
+
+    public function testComposerJsonChangeDoesNotDirtyWorkingTree(): void
+    {
+        $this->writeComposerJson([
+            'name' => 'test/pkg',
+            'require' => ['php' => '>=8.2'],
+            'bin' => ['bin/tool'],
+        ]);
+
+        mkdir($this->testDir . '/bin', 0777, true);
+        file_put_contents($this->testDir . '/bin/tool', '<?php $v = "1.4.0";');
+
+        $this->initGit();
+
+        // Modify composer.json after git commit — it should not dirty the working tree
+        $this->writeComposerJson([
+            'name' => 'test/pkg',
+            'require' => ['php' => '>=8.3'],
+            'bin' => ['bin/tool'],
+        ]);
+
+        $result = $this->checker()->check();
+
+        static::assertTrue($result->workingTreeClean);
+        static::assertEmpty($result->workingTreeChanges);
+    }
+
     // ─── Overall release readiness ─────────────────────────────────────────
 
     public function testReadyReleaseState(): void

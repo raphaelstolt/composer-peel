@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+### Fixed
+- The `status` command no longer reports a dirty working tree when only the composer-peel backup file or
+`composer.json` have changed.
+
 ## [v4.2.0] - 2026-10-04
 
 ### Added

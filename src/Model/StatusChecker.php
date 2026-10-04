@@ -344,7 +344,11 @@ class StatusChecker
             $changes[] = trim($line);
         }
 
-        return [false, $changes];
+        // Filter out expected changes (composer.json, backup, managed files)
+        // so the working tree is only considered dirty when there are unexpected changes
+        $unexpectedChanges = $this->filterUnexpectedChanges($changes);
+
+        return [count($unexpectedChanges) === 0, $unexpectedChanges];
     }
 
     /**
@@ -413,8 +417,7 @@ class StatusChecker
             return;
         }
 
-        $unexpectedChanges = $this->filterUnexpectedChanges($workingTreeChanges);
-        if (count($unexpectedChanges) > 0) {
+        if (count($workingTreeChanges) > 0) {
             $issues[] = 'Working tree contains unexpected changes';
         }
     }
@@ -434,7 +437,7 @@ class StatusChecker
 
         $unexpected = [];
         foreach ($workingTreeChanges as $change) {
-            $path = substr(trim($change), 3);
+            $path = ltrim(substr(trim($change), 2));
             if ($this->isPathAllowed($path, $allowedPaths)) {
                 continue;
             }
@@ -450,7 +453,7 @@ class StatusChecker
     private function isPathAllowed(string $path, array $allowedPaths): bool
     {
         foreach ($allowedPaths as $allowedPath) {
-            if ($path === $allowedPath) {
+            if ($path === $allowedPath || $path === ltrim($allowedPath, './')) {
                 return true;
             }
             if (str_ends_with($allowedPath, '/') && str_starts_with($path, $allowedPath)) {
