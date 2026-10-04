@@ -31,7 +31,7 @@ if (!$autoloaderFound) {
     die(1);
 }
 
-const APPLICATION_VERSION = '4.2.0';
+const APPLICATION_VERSION = '4.2.1';
 
 $application = new Application('composer-peel', APPLICATION_VERSION);
 

@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+## [v4.2.1] - 2026-10-04
+
 ### Fixed
 - The `status` command no longer reports a dirty working tree when only the composer-peel backup file or
 `composer.json` have changed.
@@ -119,7 +121,8 @@ the provided release tag.
 - Initial implementation.
 
 
-[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v4.2.0...HEAD
+[Unreleased]: https://github.com/raphaelstolt/composer-peel/compare/v4.2.1...HEAD
+[v4.2.1]: https://github.com/raphaelstolt/composer-peel/compare/v4.2.0...v4.2.1
 [v4.2.0]: https://github.com/raphaelstolt/composer-peel/compare/v4.1.0...v4.2.0
 [v4.1.0]: https://github.com/raphaelstolt/composer-peel/compare/v4.0.0...v4.1.0
 [v4.0.0]: https://github.com/raphaelstolt/composer-peel/compare/v3.0.0...v4.0.0
