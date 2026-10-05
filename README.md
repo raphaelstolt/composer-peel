@@ -527,9 +527,7 @@ contains the restored manifest:
 Development commit
        │
        ▼
-Peeled manifest commit
-       │
-       └── Release tag (v1.0.0)
+Peeled manifest commit ──► Release tag (v4.2.1)
        │
        ▼
 Restored development manifest commit
