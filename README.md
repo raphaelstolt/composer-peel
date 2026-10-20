@@ -192,7 +192,7 @@ The `status` command distinguishes between two version concepts:
 - __Package version__: the optional `version` field in `composer.json`. This is metadata for the Composer package
   and is not used as an application version source.
 - __Application version__: discovered from supported source files such as `bin/` files, `src/Console/Application.php`,
-  `src/Application.php`, and `src/Server.php`. This follows the same detection rules as `version-aligner`.
+  `src/Application.php`, and `src/Server.php`. This follows the same detection rules as [`version-aligner`](https://github.com/raphaelstolt/version-aligner).
 
 `composer.json` is never used as an application version source.
 
