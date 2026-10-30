@@ -554,6 +554,17 @@ Restored development manifest commit
 The skill teaches compatible coding agents how to inspect the configuration, preview changes, peel the configured
 sections, and safely perform the release workflow.
 
+## AI disclaimer
+
+This package is developed with the assistance of Artificial Intelligence (AI). AI tools are used throughout the development
+process, including code generation, documentation, testing, and maintenance.
+
+While reasonable care is taken to review and validate AI-generated contributions, AI-generated code is not inherently correct,
+secure, or free of defects. All contributions remain subject to human review and project quality standards.
+
+As with any software, use this package at your own risk. No guarantee is made regarding its fitness for a particular purpose,
+and the maintainers assume no liability for damages resulting from its use.
+
 ## License
 
 This CLI and its library are licensed under the MIT license. Please see [LICENSE.md](LICENSE.md) for more details.
